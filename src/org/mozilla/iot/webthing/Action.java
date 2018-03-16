@@ -1,17 +1,17 @@
-package org.mozilla_iot.webthing;
+package org.mozilla.iot.webthing;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class Action {
-    private String id;
-    private Thing thing;
-    private String name;
-    private JSONObject args;
-    private String href;
-    private String status;
-    private String timeRequested;
-    private String timeCompleted;
+    protected String id;
+    protected Thing thing;
+    protected String name;
+    protected JSONObject args;
+    protected String href;
+    protected String status;
+    protected String timeRequested;
+    protected String timeCompleted;
 
     public Action(String id, Thing thing, String name) {
         this(id, thing, name, null);

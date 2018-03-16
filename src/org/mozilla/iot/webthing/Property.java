@@ -1,7 +1,9 @@
-package org.mozilla_iot.webthing;
+package org.mozilla.iot.webthing;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.Map;
 
 public class Property<T> {
     private Thing thing;
@@ -9,44 +11,40 @@ public class Property<T> {
     private PropertyDescription description;
     private T value;
 
-    public class PropertyDescription<T> {
+    private class PropertyDescription<T> {
         private String type;
         private String unit;
         private String description;
         private String href;
         private T min;
         private T max;
-
-        public void setType(String type) {
-            this.type = type;
-        }
-
-        public void setUnit(String unit) {
-            this.unit = unit;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        public void setHref(String href) {
-            this.href = href;
-        }
-
-        public void setMin(T min) {
-            this.min = min;
-        }
-
-        public void setMax(T max) {
-            this.max = max;
-        }
     }
 
-    public Property(Thing thing, String name, PropertyDescription description) {
+    public Property(Thing thing, String name, Map<String, Object> description) {
         this.thing = thing;
         this.name = name;
-        this.description = description;
+        this.description = new PropertyDescription<T>();
         this.description.href = String.format("/properties/%s", this.name);
+
+        if (description.containsKey("type")) {
+            this.description.type = (String)description.get("type");
+        }
+
+        if (description.containsKey("unit")) {
+            this.description.unit = (String)description.get("unit");
+        }
+
+        if (description.containsKey("description")) {
+            this.description.description = (String)description.get("description");
+        }
+
+        if (description.containsKey("min")) {
+            this.description.min = (T)description.get("min");
+        }
+
+        if (description.containsKey("max")) {
+            this.description.max = (T)description.get("max");
+        }
     }
 
     public JSONObject asPropertyDescription() {

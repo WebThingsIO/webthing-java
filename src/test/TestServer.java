@@ -1,10 +1,3 @@
-# webthing
-
-Implementation of an HTTP [Web Thing](https://iot.mozilla.org/wot/).
-
-# Example
-
-```java
 package test;
 
 import org.json.JSONObject;
@@ -82,4 +75,3 @@ public class TestServer {
         }
     }
 }
-```
