@@ -1,4 +1,4 @@
-package org.mozilla_iot.webthing;
+package org.mozilla.iot.webthing;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -83,8 +83,11 @@ public class Thing {
         this.type = type;
         this.description = description;
         this.properties = new HashMap<>();
+        this.availableActions = new HashMap<>();
         this.availableEvents = new HashMap<>();
+        this.actions = new HashMap<>();
         this.events = new ArrayList<>();
+        this.subscribers = new HashSet<>();
     }
 
     public JSONObject asThingDescription(String wsPath, String uiPath) {
@@ -119,6 +122,10 @@ public class Thing {
             obj.put("properties", this.getPropertyDescriptions());
             obj.put("actions", actions);
             obj.put("events", events);
+
+            if (this.description != null) {
+                obj.put("description", this.getDescription());
+            }
 
             JSONObject propertiesLink = new JSONObject();
             propertiesLink.put("rel", "properties");
@@ -162,6 +169,10 @@ public class Thing {
 
     public String getType() {
         return this.type;
+    }
+
+    public String getDescription() {
+        return this.description;
     }
 
     public JSONObject getPropertyDescriptions() {
@@ -267,11 +278,12 @@ public class Thing {
 
         Class cls = this.availableActions.get(actionName).getCls();
         try {
-            Constructor constructor = cls.getConstructor(JSONObject.class);
-            Action action = (Action)constructor.newInstance(new Object[]{args});
+            Constructor constructor = cls.getConstructor(Thing.class, JSONObject.class);
+            Action action = (Action)constructor.newInstance(new Object[]{this, args});
             this.actions.get(actionName).add(action);
             return action;
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            System.out.println(e);
             return null;
         }
     }

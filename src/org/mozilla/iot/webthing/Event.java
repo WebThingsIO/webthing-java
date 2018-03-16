@@ -1,9 +1,7 @@
-package org.mozilla_iot.webthing;
+package org.mozilla.iot.webthing;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.time.Instant;
 
 public class Event {
     private Thing thing;

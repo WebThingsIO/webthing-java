@@ -1,4 +1,4 @@
-package org.mozilla_iot.webthing;
+package org.mozilla.iot.webthing;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -17,6 +17,18 @@ public class WebThingServer extends RouterNanoHTTPD {
     private String ip;
     private Thing thing;
     private boolean isTls;
+
+    private static class ActionRunner extends Thread {
+        private Action action;
+
+        public ActionRunner(Action action) {
+            this.action = action;
+        }
+
+        public void run() {
+            this.action.start();
+        }
+    }
 
     public class SSLOptions {
 
@@ -54,21 +66,21 @@ public class WebThingServer extends RouterNanoHTTPD {
         addRoute("/events", EventsHandler.class, this.thing);
     }
 
-    private static class BaseHandler implements UriResponder {
+    public static class BaseHandler implements UriResponder {
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
             return NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
-                                                    "text/plain",
-                                                    "");
+                                                    null,
+                                                    null);
         }
 
         public Response put(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
             return NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
-                                                    "text/plain",
-                                                    "");
+                                                    null,
+                                                    null);
 
         }
 
@@ -76,8 +88,8 @@ public class WebThingServer extends RouterNanoHTTPD {
                              Map<String, String> urlParams,
                              IHTTPSession session) {
             return NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
-                                                    "text/plain",
-                                                    "");
+                                                    null,
+                                                    null);
 
         }
 
@@ -85,8 +97,8 @@ public class WebThingServer extends RouterNanoHTTPD {
                                Map<String, String> urlParams,
                                IHTTPSession session) {
             return NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
-                                                    "text/plain",
-                                                    "");
+                                                    null,
+                                                    null);
 
         }
 
@@ -95,8 +107,8 @@ public class WebThingServer extends RouterNanoHTTPD {
                               Map<String, String> urlParams,
                               IHTTPSession session) {
             return NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
-                                                    "text/plain",
-                                                    "");
+                                                    null,
+                                                    null);
 
         }
 
@@ -108,16 +120,30 @@ public class WebThingServer extends RouterNanoHTTPD {
 
             return parts[index];
         }
+
+        public JSONObject parseBody(IHTTPSession session) {
+            Integer contentLength = Integer.parseInt(session.getHeaders()
+                                                            .get("content-length"));
+            byte[] buffer = new byte[contentLength];
+            try {
+                session.getInputStream().read(buffer, 0, contentLength);
+                JSONObject obj = new JSONObject(new String(buffer));
+                return obj;
+            } catch (IOException e) {
+                return null;
+            }
+        }
     }
 
-    private static class ThingHandler extends BaseHandler {
+    public static class ThingHandler extends BaseHandler {
+        @Override
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
             Thing thing = uriResource.initParameter(0, Thing.class);
             String ip = uriResource.initParameter(1, String.class);
-            int port = uriResource.initParameter(2, int.class);
-            boolean isTls = uriResource.initParameter(3, boolean.class);
+            Integer port = uriResource.initParameter(2, Integer.class);
+            Boolean isTls = uriResource.initParameter(3, Boolean.class);
 
             String wsPath = String.format("%s://%s:%d/",
                                           isTls ? "wss" : "ws",
@@ -132,7 +158,8 @@ public class WebThingServer extends RouterNanoHTTPD {
         }
     }
 
-    private static class PropertiesHandler extends BaseHandler {
+    public static class PropertiesHandler extends BaseHandler {
+        @Override
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
@@ -143,77 +170,80 @@ public class WebThingServer extends RouterNanoHTTPD {
         }
     }
 
-    private static class PropertyHandler extends BaseHandler {
+    public static class PropertyHandler extends BaseHandler {
+        @Override
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
             Thing thing = uriResource.initParameter(0, Thing.class);
-            String propertyName = this.getUriParam(uriResource.getUri(), 1);
+            String propertyName = this.getUriParam(session.getUri(), 2);
             if (!thing.hasProperty(propertyName)) {
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        "text/plain",
-                                                        "");
+                                                        null,
+                                                        null);
             }
 
             JSONObject obj = new JSONObject();
             try {
-                obj.put(propertyName, thing.getProperty(propertyName));
+                Object value = thing.getProperty(propertyName);
+                if (value == null) {
+                    obj.put(propertyName, JSONObject.NULL);
+                } else {
+                    obj.putOpt(propertyName, value);
+                }
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                         "application/json",
                                                         obj.toString());
             } catch (JSONException e) {
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
-                                                        "text/plain",
-                                                        "");
+                                                        null,
+                                                        null);
             }
         }
 
+        @Override
         public Response put(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
             Thing thing = uriResource.initParameter(0, Thing.class);
-            String propertyName = this.getUriParam(uriResource.getUri(), 1);
+            String propertyName = this.getUriParam(session.getUri(), 2);
             if (!thing.hasProperty(propertyName)) {
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        "text/plain",
-                                                        "");
+                                                        null,
+                                                        null);
             }
 
-            Map<String, String> map = new HashMap<>();
-            JSONObject json;
-            try {
-                session.parseBody(map);
-                String data = map.get("content");
-                json = new JSONObject(data);
-            } catch (IOException | ResponseException | JSONException e) {
+            JSONObject json = this.parseBody(session);
+            if (json == null) {
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.BAD_REQUEST,
-                                                        "text/plain",
-                                                        "");
+                                                        null,
+                                                        null);
             }
 
             if (!json.has(propertyName)) {
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.BAD_REQUEST,
-                                                        "text/plain",
-                                                        "");
+                                                        null,
+                                                        null);
             }
 
             try {
                 thing.setProperty(propertyName, json.get(propertyName));
 
                 JSONObject obj = new JSONObject();
-                obj.put(propertyName, thing.getProperty(propertyName));
+                obj.putOpt(propertyName, thing.getProperty(propertyName));
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                         "application/json",
                                                         obj.toString());
             } catch (JSONException e) {
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
-                                                        "text/plain",
-                                                        "");
+                                                        null,
+                                                        null);
             }
         }
     }
 
-    private static class ActionsHandler extends BaseHandler {
+    public static class ActionsHandler extends BaseHandler {
+        @Override
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
@@ -224,21 +254,17 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                          .toString());
         }
 
+        @Override
         public Response post(UriResource uriResource,
                              Map<String, String> urlParams,
                              IHTTPSession session) {
             Thing thing = uriResource.initParameter(0, Thing.class);
 
-            Map<String, String> map = new HashMap<>();
-            JSONObject json;
-            try {
-                session.parseBody(map);
-                String data = map.get("postData");
-                json = new JSONObject(data);
-            } catch (IOException | ResponseException | JSONException e) {
+            JSONObject json = this.parseBody(session);
+            if (json == null) {
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.BAD_REQUEST,
-                                                        "text/plain",
-                                                        "");
+                                                        null,
+                                                        null);
             }
 
             try {
@@ -254,31 +280,34 @@ public class WebThingServer extends RouterNanoHTTPD {
                     inner.put("href", action.getHref());
                     inner.put("status", action.getStatus());
                     response.put(actionName, inner);
+
+                    (new ActionRunner(action)).start();
                 }
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.CREATED,
                                                         "application/json",
                                                         response.toString());
             } catch (JSONException e) {
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
-                                                        "text/plain",
-                                                        "");
+                                                        null,
+                                                        null);
             }
         }
     }
 
-    private static class ActionHandler extends BaseHandler {
+    public static class ActionHandler extends BaseHandler {
+        @Override
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
             Thing thing = uriResource.initParameter(0, Thing.class);
-            String actionName = this.getUriParam(uriResource.getUri(), 1);
-            String actionId = this.getUriParam(uriResource.getUri(), 2);
+            String actionName = this.getUriParam(session.getUri(), 2);
+            String actionId = this.getUriParam(session.getUri(), 3);
 
             Action action = thing.getAction(actionName, actionId);
             if (action == null) {
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        "text/plain",
-                                                        "");
+                                                        null,
+                                                        null);
             }
 
             return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
@@ -288,6 +317,7 @@ public class WebThingServer extends RouterNanoHTTPD {
 
         }
 
+        @Override
         public Response put(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
@@ -298,29 +328,32 @@ public class WebThingServer extends RouterNanoHTTPD {
 
         }
 
+        @Override
         public Response delete(UriResource uriResource,
                                Map<String, String> urlParams,
                                IHTTPSession session) {
             Thing thing = uriResource.initParameter(0, Thing.class);
-            String actionName = this.getUriParam(uriResource.getUri(), 1);
-            String actionId = this.getUriParam(uriResource.getUri(), 2);
+            String actionName = this.getUriParam(session.getUri(), 2);
+            String actionId = this.getUriParam(session.getUri(), 3);
 
             Action action = thing.getAction(actionName, actionId);
             if (action == null) {
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        "text/plain",
-                                                        "");
+                                                        null,
+                                                        null);
             }
 
             action.cancel();
+
             return NanoHTTPD.newFixedLengthResponse(Response.Status.NO_CONTENT,
-                                                    "text/plain",
-                                                    "");
+                                                    null,
+                                                    null);
 
         }
     }
 
-    private static class EventsHandler extends BaseHandler {
+    public static class EventsHandler extends BaseHandler {
+        @Override
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
