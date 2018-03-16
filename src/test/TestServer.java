@@ -26,7 +26,8 @@ public class TestServer {
 
         @Override
         public void performAction() {
-            this.thing.addEvent(new RebootEvent(this.thing));
+            Thing thing = this.getThing();
+            thing.addEvent(new RebootEvent(thing));
         }
     }
 

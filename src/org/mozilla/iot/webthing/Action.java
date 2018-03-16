@@ -4,14 +4,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class Action {
-    protected String id;
-    protected Thing thing;
-    protected String name;
-    protected JSONObject args;
-    protected String href;
-    protected String status;
-    protected String timeRequested;
-    protected String timeCompleted;
+    private String id;
+    private Thing thing;
+    private String name;
+    private JSONObject args;
+    private String href;
+    private String status;
+    private String timeRequested;
+    private String timeCompleted;
 
     public Action(String id, Thing thing, String name) {
         this(id, thing, name, null);
@@ -62,6 +62,10 @@ public class Action {
 
     public String getStatus() {
         return this.status;
+    }
+
+    public Thing getThing() {
+        return this.thing;
     }
 
     public void start() {
