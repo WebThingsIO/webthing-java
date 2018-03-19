@@ -68,6 +68,14 @@ public class Action {
         return this.thing;
     }
 
+    public String getTimeRequested() {
+        return this.timeRequested;
+    }
+
+    public String getTimeCompleted() {
+        return this.timeCompleted;
+    }
+
     public void start() {
         this.status = "pending";
         this.thing.actionNotify(this);

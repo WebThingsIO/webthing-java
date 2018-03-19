@@ -6,6 +6,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 import javax.jmdns.JmDNS;
@@ -13,6 +14,7 @@ import javax.jmdns.ServiceInfo;
 import javax.net.ssl.SSLServerSocketFactory;
 
 import fi.iki.elonen.NanoHTTPD;
+import fi.iki.elonen.NanoWSD;
 import fi.iki.elonen.router.RouterNanoHTTPD;
 
 
@@ -201,6 +203,44 @@ public class WebThingServer extends RouterNanoHTTPD {
             Integer port = uriResource.initParameter(2, Integer.class);
             Boolean isTls = uriResource.initParameter(3, Boolean.class);
 
+            Map<String, String> headers = session.getHeaders();
+            if (isWebsocketRequested(session)) {
+                if (!NanoWSD.HEADER_WEBSOCKET_VERSION_VALUE.equalsIgnoreCase(
+                        headers.get(NanoWSD.HEADER_WEBSOCKET_VERSION))) {
+                    return newFixedLengthResponse(Response.Status.BAD_REQUEST,
+                                                  NanoHTTPD.MIME_PLAINTEXT,
+                                                  "Invalid Websocket-Version " +
+                                                          headers.get(NanoWSD.HEADER_WEBSOCKET_VERSION));
+                }
+
+                if (!headers.containsKey(NanoWSD.HEADER_WEBSOCKET_KEY)) {
+                    return newFixedLengthResponse(Response.Status.BAD_REQUEST,
+                                                  NanoHTTPD.MIME_PLAINTEXT,
+                                                  "Missing Websocket-Key");
+                }
+
+                NanoWSD.WebSocket webSocket =
+                        new ThingWebSocket(thing, session);
+                Response handshakeResponse = webSocket.getHandshakeResponse();
+                try {
+                    handshakeResponse.addHeader(NanoWSD.HEADER_WEBSOCKET_ACCEPT,
+                                                NanoWSD.makeAcceptKey(headers.get(
+                                                        NanoWSD.HEADER_WEBSOCKET_KEY)));
+                } catch (NoSuchAlgorithmException e) {
+                    return newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
+                                                  NanoHTTPD.MIME_PLAINTEXT,
+                                                  "The SHA-1 Algorithm required for websockets is not available on the server.");
+                }
+
+                if (headers.containsKey(NanoWSD.HEADER_WEBSOCKET_PROTOCOL)) {
+                    handshakeResponse.addHeader(NanoWSD.HEADER_WEBSOCKET_PROTOCOL,
+                                                headers.get(NanoWSD.HEADER_WEBSOCKET_PROTOCOL)
+                                                       .split(",")[0]);
+                }
+
+                return handshakeResponse;
+            }
+
             String wsPath = String.format("%s://%s:%d/",
                                           isTls ? "wss" : "ws",
                                           ip,
@@ -211,6 +251,123 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                     thing.asThingDescription(
                                                             wsPath,
                                                             null).toString());
+        }
+
+        private boolean isWebSocketConnectionHeader(Map<String, String> headers) {
+            String connection = headers.get(NanoWSD.HEADER_CONNECTION);
+            return connection != null && connection.toLowerCase()
+                                                   .contains(NanoWSD.HEADER_CONNECTION_VALUE
+                                                                     .toLowerCase());
+        }
+
+        private boolean isWebsocketRequested(IHTTPSession session) {
+            Map<String, String> headers = session.getHeaders();
+            String upgrade = headers.get(NanoWSD.HEADER_UPGRADE);
+            boolean isCorrectConnection = isWebSocketConnectionHeader(headers);
+            boolean isUpgrade =
+                    NanoWSD.HEADER_UPGRADE_VALUE.equalsIgnoreCase(upgrade);
+            return isUpgrade && isCorrectConnection;
+        }
+
+        public static class ThingWebSocket extends NanoWSD.WebSocket {
+            private final Thing thing;
+
+            public ThingWebSocket(Thing thing, IHTTPSession handshakeRequest) {
+                super(handshakeRequest);
+                this.thing = thing;
+            }
+
+            @Override
+            protected void onOpen() {
+                this.thing.addSubscriber(this);
+            }
+
+            @Override
+            protected void onClose(NanoWSD.WebSocketFrame.CloseCode code,
+                                   String reason,
+                                   boolean initiatedByRemote) {
+                this.thing.removeSubscriber(this);
+            }
+
+            @Override
+            protected void onMessage(NanoWSD.WebSocketFrame message) {
+                message.setUnmasked();
+                String data = message.getTextPayload();
+                JSONObject json = new JSONObject(data);
+
+                if (!json.has("messageType") || !json.has("data")) {
+                    JSONObject error = new JSONObject();
+                    JSONObject inner = new JSONObject();
+
+                    inner.put("status", "400 Bad Request");
+                    inner.put("message", "Invalid message");
+                    error.put("messageType", "error");
+                    error.put("data", inner);
+
+                    this.sendMessage(inner.toString());
+
+                    return;
+                }
+
+                String messageType = json.getString("messageType");
+                JSONObject messageData = json.getJSONObject("data");
+                switch (messageType) {
+                    case "setProperty":
+                        JSONArray propertyNames = messageData.names();
+                        for (int i = 0; i < propertyNames.length(); ++i) {
+                            String propertyName = propertyNames.getString(i);
+                            this.thing.setProperty(propertyName,
+                                                   messageData.get(propertyName));
+                        }
+                        break;
+                    case "requestAction":
+                        JSONArray actionNames = messageData.names();
+                        for (int i = 0; i < actionNames.length(); ++i) {
+                            String actionName = actionNames.getString(i);
+                            Action action = this.thing.performAction(actionName,
+                                                                     messageData
+                                                                             .getJSONObject(
+                                                                                     actionName));
+
+                            (new ActionRunner(action)).start();
+                        }
+                        break;
+                    case "addEventSubscription":
+                        JSONArray eventNames = messageData.names();
+                        for (int i = 0; i < eventNames.length(); ++i) {
+                            String eventName = eventNames.getString(i);
+                            this.thing.addEventSubscriber(eventName, this);
+                        }
+                        break;
+                    default:
+                        JSONObject error = new JSONObject();
+                        JSONObject inner = new JSONObject();
+
+                        inner.put("status", "400 Bad Request");
+                        inner.put("message",
+                                  "Unknown messageType: " + messageType);
+                        error.put("messageType", "error");
+                        error.put("data", inner);
+
+                        this.sendMessage(inner.toString());
+                        break;
+                }
+            }
+
+            @Override
+            protected void onPong(NanoWSD.WebSocketFrame pong) {
+            }
+
+            @Override
+            protected void onException(IOException exception) {
+            }
+
+            public void sendMessage(String message) {
+                try {
+                    this.send(message);
+                } catch (IOException e) {
+                }
+            }
         }
     }
 
@@ -327,7 +484,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                 JSONObject response = new JSONObject();
                 JSONArray actionNames = json.names();
                 for (int i = 0; i < actionNames.length(); ++i) {
-                    String actionName = (String)actionNames.get(i);
+                    String actionName = actionNames.getString(i);
                     Action action = thing.performAction(actionName,
                                                         json.getJSONObject(
                                                                 actionName));

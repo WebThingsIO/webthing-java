@@ -22,7 +22,7 @@ public class Thing {
     private Map<String, AvailableEvent> availableEvents;
     private Map<String, List<Action>> actions;
     private List<Event> events;
-    private Set<Object> subscribers;
+    private Set<WebThingServer.ThingHandler.ThingWebSocket> subscribers;
 
     public Thing() {
         this("", "thing", "");
@@ -255,11 +255,11 @@ public class Thing {
         this.actions.put(name, new ArrayList<Action>());
     }
 
-    public void addSubscriber(Object ws) {
+    public void addSubscriber(WebThingServer.ThingHandler.ThingWebSocket ws) {
         this.subscribers.add(ws);
     }
 
-    public void removeSubscriber(Object ws) {
+    public void removeSubscriber(WebThingServer.ThingHandler.ThingWebSocket ws) {
         if (this.subscribers.contains(ws)) {
             this.subscribers.remove(ws);
         }
@@ -269,33 +269,75 @@ public class Thing {
         });
     }
 
-    public void addEventSubscriber(String name, Object ws) {
+    public void addEventSubscriber(String name,
+                                   WebThingServer.ThingHandler.ThingWebSocket ws) {
         if (this.availableEvents.containsKey(name)) {
             this.availableEvents.get(name).addSubscriber(ws);
         }
     }
 
-    public void removeEventSubscriber(String name, Object ws) {
+    public void removeEventSubscriber(String name,
+                                      WebThingServer.ThingHandler.ThingWebSocket ws) {
         if (this.availableEvents.containsKey(name)) {
             this.availableEvents.get(name).removeSubscriber(ws);
         }
     }
 
     public void propertyNotify(Property property) {
+        JSONObject json = new JSONObject();
+        JSONObject inner = new JSONObject();
 
+        inner.put(property.getName(), property.getValue());
+        json.put("messageType", "propertyStatus");
+        json.put("data", inner);
+
+        String message = json.toString();
+
+        this.subscribers.forEach((subscriber) -> {
+            subscriber.sendMessage(message);
+        });
     }
 
     public void actionNotify(Action action) {
+        JSONObject json = new JSONObject();
 
+        json.put("messageType", "actionStatus");
+        json.put("data", action.asActionDescription());
+
+        String message = json.toString();
+
+        this.subscribers.forEach((subscriber) -> {
+            subscriber.sendMessage(message);
+        });
     }
 
     public void eventNotify(Event event) {
+        String eventName = event.getName();
+        if (!this.availableEvents.containsKey(eventName)) {
+            return;
+        }
 
+        JSONObject json = new JSONObject();
+        JSONObject inner = new JSONObject();
+        JSONObject eventData = new JSONObject();
+
+        eventData.put("timestamp", event.getTime());
+        inner.put(eventName, eventData);
+        json.put("messageType", "event");
+        json.put("data", inner);
+
+        String message = json.toString();
+
+        this.availableEvents.get(eventName)
+                            .getSubscribers()
+                            .forEach((subscriber) -> {
+                                subscriber.sendMessage(message);
+                            });
     }
 
     private class AvailableEvent {
         private String description;
-        private Set<Object> subscribers;
+        private Set<WebThingServer.ThingHandler.ThingWebSocket> subscribers;
 
         public AvailableEvent(String description) {
             this.description = description;
@@ -306,14 +348,18 @@ public class Thing {
             return this.description;
         }
 
-        public void addSubscriber(Object ws) {
+        public void addSubscriber(WebThingServer.ThingHandler.ThingWebSocket ws) {
             this.subscribers.add(ws);
         }
 
-        public void removeSubscriber(Object ws) {
+        public void removeSubscriber(WebThingServer.ThingHandler.ThingWebSocket ws) {
             if (this.subscribers.contains(ws)) {
                 this.subscribers.remove(ws);
             }
+        }
+
+        public Set<WebThingServer.ThingHandler.ThingWebSocket> getSubscribers() {
+            return this.subscribers;
         }
     }
 

@@ -89,6 +89,10 @@ public class Property<T> {
         return this.name;
     }
 
+    public Thing getThing() {
+        return this.thing;
+    }
+
     private class PropertyDescription<T> {
         private String type;
         private String unit;

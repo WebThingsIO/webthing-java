@@ -32,4 +32,20 @@ public class Event {
             return null;
         }
     }
+
+    public Thing getThing() {
+        return this.thing;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public String getDescription() {
+        return this.description;
+    }
+
+    public String getTime() {
+        return this.time;
+    }
 }
