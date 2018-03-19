@@ -11,15 +11,6 @@ public class Property<T> {
     private PropertyDescription description;
     private T value;
 
-    private class PropertyDescription<T> {
-        private String type;
-        private String unit;
-        private String description;
-        private String href;
-        private T min;
-        private T max;
-    }
-
     public Property(Thing thing, String name, Map<String, Object> description) {
         this.thing = thing;
         this.name = name;
@@ -35,7 +26,8 @@ public class Property<T> {
         }
 
         if (description.containsKey("description")) {
-            this.description.description = (String)description.get("description");
+            this.description.description =
+                    (String)description.get("description");
         }
 
         if (description.containsKey("min")) {
@@ -95,5 +87,14 @@ public class Property<T> {
 
     public String getName() {
         return this.name;
+    }
+
+    private class PropertyDescription<T> {
+        private String type;
+        private String unit;
+        private String description;
+        private String href;
+        private T min;
+        private T max;
     }
 }

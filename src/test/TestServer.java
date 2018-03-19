@@ -13,24 +13,6 @@ import java.util.Map;
 import java.util.UUID;
 
 public class TestServer {
-    public static class RebootEvent extends Event {
-        public RebootEvent(Thing thing) {
-            super(thing, "reboot", "Going down for reboot");
-        }
-    }
-
-    public static class RebootAction extends Action {
-        public RebootAction(Thing thing, JSONObject params) {
-            super(UUID.randomUUID().toString(), thing, "reboot", params);
-        }
-
-        @Override
-        public void performAction() {
-            Thing thing = this.getThing();
-            thing.addEvent(new RebootEvent(thing));
-        }
-    }
-
     public static void main(String[] args) {
         Thing thing =
                 new Thing("WoT Pi", "thing", "A WoT-connected Raspberry Pi");
@@ -54,25 +36,44 @@ public class TestServer {
         ledDescription.put("description", "A red LED");
         thing.addProperty(new Property(thing, "led", ledDescription));
 
-        thing.addActionDescription("reboot", "Reboot the device", RebootAction.class);
+        thing.addActionDescription("reboot",
+                                   "Reboot the device",
+                                   RebootAction.class);
         thing.addEventDescription("reboot", "Going down for reboot");
 
-        WebThingServer server = new WebThingServer(thing, 8888);
+        WebThingServer server;
 
         try {
-            server.start();
+            server = new WebThingServer(thing, 8888);
+
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    server.stop();
+                }
+            });
+
+            server.start(false);
         } catch (IOException e) {
             System.out.println(e);
             System.exit(1);
         }
+    }
 
-        while (true) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                server.stop();
-                System.exit(0);
-            }
+    public static class RebootEvent extends Event {
+        public RebootEvent(Thing thing) {
+            super(thing, "reboot", "Going down for reboot");
+        }
+    }
+
+    public static class RebootAction extends Action {
+        public RebootAction(Thing thing, JSONObject params) {
+            super(UUID.randomUUID().toString(), thing, "reboot", params);
+        }
+
+        @Override
+        public void performAction() {
+            Thing thing = this.getThing();
+            thing.addEvent(new RebootEvent(thing));
         }
     }
 }

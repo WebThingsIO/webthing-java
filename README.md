@@ -33,7 +33,8 @@ public class TestServer {
 
         @Override
         public void performAction() {
-            this.thing.addEvent(new RebootEvent(this.thing));
+            Thing thing = this.getThing();
+            thing.addEvent(new RebootEvent(thing));
         }
     }
 
@@ -60,25 +61,26 @@ public class TestServer {
         ledDescription.put("description", "A red LED");
         thing.addProperty(new Property(thing, "led", ledDescription));
 
-        thing.addActionDescription("reboot", "Reboot the device", RebootAction.class);
+        thing.addActionDescription("reboot",
+                                   "Reboot the device",
+                                   RebootAction.class);
         thing.addEventDescription("reboot", "Going down for reboot");
 
-        WebThingServer server = new WebThingServer(thing, 8888);
+        WebThingServer server;
 
         try {
-            server.start();
+            server = new WebThingServer(thing, 8888);
+
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    server.stop();
+                }
+            });
+
+            server.start(false);
         } catch (IOException e) {
             System.out.println(e);
             System.exit(1);
-        }
-
-        while (true) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                server.stop();
-                System.exit(0);
-            }
         }
     }
 }

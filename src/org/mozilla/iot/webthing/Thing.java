@@ -24,48 +24,6 @@ public class Thing {
     private List<Event> events;
     private Set<Object> subscribers;
 
-    private class AvailableEvent {
-        private String description;
-        private Set<Object> subscribers;
-
-        public AvailableEvent(String description) {
-            this.description = description;
-            this.subscribers = new HashSet<>();
-        }
-
-        public String getDescription() {
-            return this.description;
-        }
-
-        public void addSubscriber(Object ws) {
-            this.subscribers.add(ws);
-        }
-
-        public void removeSubscriber(Object ws) {
-            if (this.subscribers.contains(ws)) {
-                this.subscribers.remove(ws);
-            }
-        }
-    }
-
-    private class AvailableAction {
-        private String description;
-        private Class cls;
-
-        public AvailableAction(String description, Class cls) {
-            this.description = description;
-            this.cls = cls;
-        }
-
-        public String getDescription() {
-            return this.description;
-        }
-
-        public Class getCls() {
-            return this.cls;
-        }
-    }
-
     public Thing() {
         this("", "thing", "");
     }
@@ -278,8 +236,10 @@ public class Thing {
 
         Class cls = this.availableActions.get(actionName).getCls();
         try {
-            Constructor constructor = cls.getConstructor(Thing.class, JSONObject.class);
-            Action action = (Action)constructor.newInstance(new Object[]{this, args});
+            Constructor constructor =
+                    cls.getConstructor(Thing.class, JSONObject.class);
+            Action action =
+                    (Action)constructor.newInstance(new Object[]{this, args});
             this.actions.get(actionName).add(action);
             return action;
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
@@ -331,5 +291,47 @@ public class Thing {
 
     public void eventNotify(Event event) {
 
+    }
+
+    private class AvailableEvent {
+        private String description;
+        private Set<Object> subscribers;
+
+        public AvailableEvent(String description) {
+            this.description = description;
+            this.subscribers = new HashSet<>();
+        }
+
+        public String getDescription() {
+            return this.description;
+        }
+
+        public void addSubscriber(Object ws) {
+            this.subscribers.add(ws);
+        }
+
+        public void removeSubscriber(Object ws) {
+            if (this.subscribers.contains(ws)) {
+                this.subscribers.remove(ws);
+            }
+        }
+    }
+
+    private class AvailableAction {
+        private String description;
+        private Class cls;
+
+        public AvailableAction(String description, Class cls) {
+            this.description = description;
+            this.cls = cls;
+        }
+
+        public String getDescription() {
+            return this.description;
+        }
+
+        public Class getCls() {
+            return this.cls;
+        }
     }
 }

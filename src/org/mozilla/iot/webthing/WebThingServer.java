@@ -5,8 +5,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.net.InetAddress;
 import java.util.Map;
+
+import javax.jmdns.JmDNS;
+import javax.jmdns.ServiceInfo;
+import javax.net.ssl.SSLServerSocketFactory;
 
 import fi.iki.elonen.NanoHTTPD;
 import fi.iki.elonen.router.RouterNanoHTTPD;
@@ -17,37 +21,28 @@ public class WebThingServer extends RouterNanoHTTPD {
     private String ip;
     private Thing thing;
     private boolean isTls;
+    private JmDNS jmdns;
 
-    private static class ActionRunner extends Thread {
-        private Action action;
-
-        public ActionRunner(Action action) {
-            this.action = action;
-        }
-
-        public void run() {
-            this.action.start();
-        }
-    }
-
-    public class SSLOptions {
-
-    }
-
-    public WebThingServer(Thing thing) {
+    public WebThingServer(Thing thing) throws IOException {
         this(thing, 80, null);
     }
 
-    public WebThingServer(Thing thing, Integer port) {
+    public WebThingServer(Thing thing, Integer port) throws IOException {
         this(thing, port, null);
     }
 
-    public WebThingServer(Thing thing, Integer port, SSLOptions sslOptions) {
+    public WebThingServer(Thing thing, Integer port, SSLOptions sslOptions)
+            throws IOException {
         super(port);
         this.port = port;
         this.thing = thing;
         this.ip = Utils.getIP();
         this.isTls = sslOptions != null;
+
+        if (this.isTls) {
+            super.makeSecure(sslOptions.getSocketFactory(),
+                             sslOptions.getProtocols());
+        }
 
         addRoute("/",
                  ThingHandler.class,
@@ -64,6 +59,67 @@ public class WebThingServer extends RouterNanoHTTPD {
                  ActionHandler.class,
                  this.thing);
         addRoute("/events", EventsHandler.class, this.thing);
+    }
+
+    public void start(boolean daemon) throws IOException {
+        this.jmdns = JmDNS.create(InetAddress.getLocalHost());
+
+        String url = String.format("url=%s://%s:%d/",
+                                   this.isTls ? "https" : "http",
+                                   this.ip,
+                                   this.port);
+        ServiceInfo serviceInfo = ServiceInfo.create("_http._tcp.local",
+                                                     this.thing.getName(),
+                                                     "_webthing",
+                                                     this.port,
+                                                     url);
+        this.jmdns.registerService(serviceInfo);
+
+        super.start(NanoHTTPD.SOCKET_READ_TIMEOUT, daemon);
+    }
+
+    public void stop() {
+        this.jmdns.unregisterAllServices();
+        super.stop();
+    }
+
+    private static class ActionRunner extends Thread {
+        private Action action;
+
+        public ActionRunner(Action action) {
+            this.action = action;
+        }
+
+        public void run() {
+            this.action.start();
+        }
+    }
+
+    public static class SSLOptions {
+        private String path;
+        private String password;
+        private String[] protocols;
+
+        public SSLOptions(String keystorePath, String keystorePassword) {
+            this(keystorePath, keystorePassword, null);
+        }
+
+        public SSLOptions(String keystorePath,
+                          String keystorePassword,
+                          String[] protocols) {
+            this.path = keystorePath;
+            this.password = keystorePassword;
+            this.protocols = protocols;
+        }
+
+        public SSLServerSocketFactory getSocketFactory() throws IOException {
+            return NanoHTTPD.makeSSLSocketFactory(this.path,
+                                                  this.password.toCharArray());
+        }
+
+        public String[] getProtocols() {
+            return this.protocols;
+        }
     }
 
     public static class BaseHandler implements UriResponder {
