@@ -1,3 +1,7 @@
+/**
+ * Java Web Thing server implementation.
+ */
+
 package org.mozilla.iot.webthing;
 
 import org.json.JSONArray;
@@ -17,7 +21,9 @@ import fi.iki.elonen.NanoHTTPD;
 import fi.iki.elonen.NanoWSD;
 import fi.iki.elonen.router.RouterNanoHTTPD;
 
-
+/**
+ * Server to represent a Web Thing over HTTP.
+ */
 public class WebThingServer extends RouterNanoHTTPD {
     private int port;
     private String ip;
@@ -25,14 +31,35 @@ public class WebThingServer extends RouterNanoHTTPD {
     private boolean isTls;
     private JmDNS jmdns;
 
+    /**
+     * Initialize the WebThingServer on port 80.
+     *
+     * @param thing The Thing managed by this server
+     * @throws IOException
+     */
     public WebThingServer(Thing thing) throws IOException {
         this(thing, 80, null);
     }
 
+    /**
+     * Initialize the WebThingServer.
+     *
+     * @param thing The Thing managed by this server
+     * @param port  Port to listen on
+     * @throws IOException
+     */
     public WebThingServer(Thing thing, Integer port) throws IOException {
         this(thing, port, null);
     }
 
+    /**
+     * Initialize the WebThingServer.
+     *
+     * @param thing      The Thing managed by this server
+     * @param port       Port to listen on
+     * @param sslOptions SSL options to pass to the NanoHTTPD server
+     * @throws IOException
+     */
     public WebThingServer(Thing thing, Integer port, SSLOptions sslOptions)
             throws IOException {
         super(port);
@@ -63,6 +90,12 @@ public class WebThingServer extends RouterNanoHTTPD {
         addRoute("/events", EventsHandler.class, this.thing);
     }
 
+    /**
+     * Start listening for incoming connections.
+     *
+     * @param daemon Whether or not to daemonize the server
+     * @throws IOException
+     */
     public void start(boolean daemon) throws IOException {
         this.jmdns = JmDNS.create(InetAddress.getLocalHost());
 
@@ -80,32 +113,63 @@ public class WebThingServer extends RouterNanoHTTPD {
         super.start(NanoHTTPD.SOCKET_READ_TIMEOUT, daemon);
     }
 
+    /**
+     * Stop listening.
+     */
     public void stop() {
         this.jmdns.unregisterAllServices();
         super.stop();
     }
 
+    /**
+     * Thread to perform an action.
+     */
     private static class ActionRunner extends Thread {
         private Action action;
 
+        /**
+         * Initialize the object.
+         *
+         * @param action The action to perform
+         */
         public ActionRunner(Action action) {
             this.action = action;
         }
 
+        /**
+         * Perform the action.
+         */
         public void run() {
             this.action.start();
         }
     }
 
+    /**
+     * Class to hold options required by SSL server.
+     */
     public static class SSLOptions {
         private String path;
         private String password;
         private String[] protocols;
 
+        /**
+         * Initialize the object.
+         *
+         * @param keystorePath     Path to the Java keystore (.jks) file
+         * @param keystorePassword Password to open the keystore
+         */
         public SSLOptions(String keystorePath, String keystorePassword) {
             this(keystorePath, keystorePassword, null);
         }
 
+        /**
+         * Initialize the object.
+         *
+         * @param keystorePath     Path to the Java keystore (.jks) file
+         * @param keystorePassword Password to open the keystore
+         * @param protocols        List of protocols to enable. Documentation
+         *                         found here: https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLServerSocket.html#setEnabledProtocols-java.lang.String:A-
+         */
         public SSLOptions(String keystorePath,
                           String keystorePassword,
                           String[] protocols) {
@@ -114,17 +178,40 @@ public class WebThingServer extends RouterNanoHTTPD {
             this.protocols = protocols;
         }
 
+        /**
+         * Create an SSLServerSocketFactory as required by NanoHTTPD.
+         *
+         * @return The socket factory.
+         * @throws IOException
+         */
         public SSLServerSocketFactory getSocketFactory() throws IOException {
             return NanoHTTPD.makeSSLSocketFactory(this.path,
                                                   this.password.toCharArray());
         }
 
+        /**
+         * Get the list of enabled protocols.
+         *
+         * @return The list of protocols.
+         */
         public String[] getProtocols() {
             return this.protocols;
         }
     }
 
+    /**
+     * Base handler that responds to every request with a 405 Method Not
+     * Allowed.
+     */
     public static class BaseHandler implements UriResponder {
+        /**
+         * Handle a GET request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return 405 Method Not Allowed response.
+         */
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
@@ -133,6 +220,14 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                     null);
         }
 
+        /**
+         * Handle a PUT request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return 405 Method Not Allowed response.
+         */
         public Response put(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
@@ -142,6 +237,14 @@ public class WebThingServer extends RouterNanoHTTPD {
 
         }
 
+        /**
+         * Handle a POST request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return 405 Method Not Allowed response.
+         */
         public Response post(UriResource uriResource,
                              Map<String, String> urlParams,
                              IHTTPSession session) {
@@ -151,6 +254,14 @@ public class WebThingServer extends RouterNanoHTTPD {
 
         }
 
+        /**
+         * Handle a DELETE request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return 405 Method Not Allowed response.
+         */
         public Response delete(UriResource uriResource,
                                Map<String, String> urlParams,
                                IHTTPSession session) {
@@ -160,6 +271,15 @@ public class WebThingServer extends RouterNanoHTTPD {
 
         }
 
+        /**
+         * Handle any other request.
+         *
+         * @param method      The HTTP method
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return 405 Method Not Allowed response.
+         */
         public Response other(String method,
                               UriResource uriResource,
                               Map<String, String> urlParams,
@@ -170,6 +290,13 @@ public class WebThingServer extends RouterNanoHTTPD {
 
         }
 
+        /**
+         * Get a parameter from the URI.
+         *
+         * @param uri   The URI
+         * @param index Index of the parameter
+         * @return The URI parameter, or null if index was invalid.
+         */
         public String getUriParam(String uri, int index) {
             String[] parts = uri.split("/");
             if (parts.length <= index) {
@@ -179,6 +306,12 @@ public class WebThingServer extends RouterNanoHTTPD {
             return parts[index];
         }
 
+        /**
+         * Parse a JSON body.
+         *
+         * @param session The HTTP session
+         * @return The parsed JSON body as a JSONObject, or null on error.
+         */
         public JSONObject parseBody(IHTTPSession session) {
             Integer contentLength = Integer.parseInt(session.getHeaders()
                                                             .get("content-length"));
@@ -193,7 +326,18 @@ public class WebThingServer extends RouterNanoHTTPD {
         }
     }
 
+    /**
+     * Handle a request to /.
+     */
     public static class ThingHandler extends BaseHandler {
+        /**
+         * Handle a GET request, including websocket requests.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return The appropriate response.
+         */
         @Override
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
@@ -204,7 +348,7 @@ public class WebThingServer extends RouterNanoHTTPD {
             Boolean isTls = uriResource.initParameter(3, Boolean.class);
 
             Map<String, String> headers = session.getHeaders();
-            if (isWebsocketRequested(session)) {
+            if (isWebSocketRequested(session)) {
                 if (!NanoWSD.HEADER_WEBSOCKET_VERSION_VALUE.equalsIgnoreCase(
                         headers.get(NanoWSD.HEADER_WEBSOCKET_VERSION))) {
                     return newFixedLengthResponse(Response.Status.BAD_REQUEST,
@@ -253,6 +397,13 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                             null).toString());
         }
 
+        /**
+         * Determine whether or not this is a websocket connection.
+         *
+         * @param headers The HTTP request headers
+         * @return Boolean indicating whether or not this is a websocket
+         * connection.
+         */
         private boolean isWebSocketConnectionHeader(Map<String, String> headers) {
             String connection = headers.get(NanoWSD.HEADER_CONNECTION);
             return connection != null && connection.toLowerCase()
@@ -260,7 +411,14 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                                      .toLowerCase());
         }
 
-        private boolean isWebsocketRequested(IHTTPSession session) {
+        /**
+         * Determine whether or not a websocket was requested.
+         *
+         * @param session The HTTP session
+         * @return Boolean indicating whether or not this is a websocket
+         * request.
+         */
+        private boolean isWebSocketRequested(IHTTPSession session) {
             Map<String, String> headers = session.getHeaders();
             String upgrade = headers.get(NanoWSD.HEADER_UPGRADE);
             boolean isCorrectConnection = isWebSocketConnectionHeader(headers);
@@ -269,19 +427,39 @@ public class WebThingServer extends RouterNanoHTTPD {
             return isUpgrade && isCorrectConnection;
         }
 
+        /**
+         * Class to handle WebSockets to a Thing.
+         */
         public static class ThingWebSocket extends NanoWSD.WebSocket {
             private final Thing thing;
 
+            /**
+             * Initialize the object.
+             *
+             * @param thing            The Thing managed by the server
+             * @param handshakeRequest The initial handshake request
+             */
             public ThingWebSocket(Thing thing, IHTTPSession handshakeRequest) {
                 super(handshakeRequest);
                 this.thing = thing;
             }
 
+            /**
+             * Handle a new connection.
+             */
             @Override
             protected void onOpen() {
                 this.thing.addSubscriber(this);
             }
 
+            /**
+             * Handle a close event on the socket.
+             *
+             * @param code              The close code
+             * @param reason            The close reason
+             * @param initiatedByRemote Whether or not the client closed the
+             *                          socket
+             */
             @Override
             protected void onClose(NanoWSD.WebSocketFrame.CloseCode code,
                                    String reason,
@@ -289,6 +467,11 @@ public class WebThingServer extends RouterNanoHTTPD {
                 this.thing.removeSubscriber(this);
             }
 
+            /**
+             * Handle an incoming message.
+             *
+             * @param message The message to handle
+             */
             @Override
             protected void onMessage(NanoWSD.WebSocketFrame message) {
                 message.setUnmasked();
@@ -371,7 +554,18 @@ public class WebThingServer extends RouterNanoHTTPD {
         }
     }
 
+    /**
+     * Handle a request to /properties.
+     */
     public static class PropertiesHandler extends BaseHandler {
+        /**
+         * Handle a GET request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return The appropriate response.
+         */
         @Override
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
@@ -383,7 +577,18 @@ public class WebThingServer extends RouterNanoHTTPD {
         }
     }
 
+    /**
+     * Handle a request to /properties/<property>.
+     */
     public static class PropertyHandler extends BaseHandler {
+        /**
+         * Handle a GET request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return The appropriate response.
+         */
         @Override
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
@@ -414,6 +619,14 @@ public class WebThingServer extends RouterNanoHTTPD {
             }
         }
 
+        /**
+         * Handle a PUT request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return The appropriate response.
+         */
         @Override
         public Response put(UriResource uriResource,
                             Map<String, String> urlParams,
@@ -455,7 +668,18 @@ public class WebThingServer extends RouterNanoHTTPD {
         }
     }
 
+    /**
+     * Handle a request to /actions.
+     */
     public static class ActionsHandler extends BaseHandler {
+        /**
+         * Handle a GET request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return The appropriate response.
+         */
         @Override
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
@@ -467,6 +691,14 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                          .toString());
         }
 
+        /**
+         * Handle a POST request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return The appropriate response.
+         */
         @Override
         public Response post(UriResource uriResource,
                              Map<String, String> urlParams,
@@ -507,7 +739,18 @@ public class WebThingServer extends RouterNanoHTTPD {
         }
     }
 
+    /**
+     * Handle a request to /actions/<action_name>/<action_id>.
+     */
     public static class ActionHandler extends BaseHandler {
+        /**
+         * Handle a GET request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return The appropriate response.
+         */
         @Override
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
@@ -530,6 +773,14 @@ public class WebThingServer extends RouterNanoHTTPD {
 
         }
 
+        /**
+         * Handle a PUT request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return The appropriate response.
+         */
         @Override
         public Response put(UriResource uriResource,
                             Map<String, String> urlParams,
@@ -541,6 +792,14 @@ public class WebThingServer extends RouterNanoHTTPD {
 
         }
 
+        /**
+         * Handle a DELETE request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return The appropriate response.
+         */
         @Override
         public Response delete(UriResource uriResource,
                                Map<String, String> urlParams,
@@ -565,7 +824,18 @@ public class WebThingServer extends RouterNanoHTTPD {
         }
     }
 
+    /**
+     * Handle a request to /events.
+     */
     public static class EventsHandler extends BaseHandler {
+        /**
+         * Handle a GET request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return The appropriate response.
+         */
         @Override
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,

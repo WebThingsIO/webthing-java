@@ -1,3 +1,7 @@
+/**
+ * High-level Thing base class implementation.
+ */
+
 package org.mozilla.iot.webthing;
 
 import org.json.JSONArray;
@@ -13,6 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * A Web Thing.
+ */
 public class Thing {
     private String type;
     private String name;
@@ -24,18 +31,39 @@ public class Thing {
     private List<Event> events;
     private Set<WebThingServer.ThingHandler.ThingWebSocket> subscribers;
 
+    /**
+     * Initialize the object.
+     */
     public Thing() {
         this("", "thing", "");
     }
 
+    /**
+     * Initialize the object.
+     *
+     * @param name The thing's name
+     */
     public Thing(String name) {
         this(name, "thing", "");
     }
 
+    /**
+     * Initialize the object.
+     *
+     * @param name The thing's name
+     * @param type The thing's type
+     */
     public Thing(String name, String type) {
         this(name, type, "");
     }
 
+    /**
+     * Initialize the object.
+     *
+     * @param name        The thing's name
+     * @param type        The thing's type
+     * @param description Description of the thing
+     */
     public Thing(String name, String type, String description) {
         this.name = name;
         this.type = type;
@@ -48,6 +76,13 @@ public class Thing {
         this.subscribers = new HashSet<>();
     }
 
+    /**
+     * Return the thing state as a Thing Description.
+     *
+     * @param wsPath The websocket URL, or null if not present
+     * @param uiPath href of a custom thing UI, or null if not present
+     * @return Current thing state.
+     */
     public JSONObject asThingDescription(String wsPath, String uiPath) {
         JSONObject obj = new JSONObject();
         JSONObject actions = new JSONObject();
@@ -121,18 +156,38 @@ public class Thing {
         }
     }
 
+    /**
+     * Get the name of the thing.
+     *
+     * @return The name.
+     */
     public String getName() {
         return this.name;
     }
 
+    /**
+     * Get the type of the thing.
+     *
+     * @return The type.
+     */
     public String getType() {
         return this.type;
     }
 
+    /**
+     * Get the description of the thing.
+     *
+     * @return The description.
+     */
     public String getDescription() {
         return this.description;
     }
 
+    /**
+     * Get the thing's properties as a JSONObject.
+     *
+     * @return Properties, i.e. name -> description.
+     */
     public JSONObject getPropertyDescriptions() {
         JSONObject obj = new JSONObject();
 
@@ -146,6 +201,11 @@ public class Thing {
         return obj;
     }
 
+    /**
+     * Get the thing's actions as a JSONArray.
+     *
+     * @return Action descriptions.
+     */
     public JSONArray getActionDescriptions() {
         JSONArray array = new JSONArray();
         this.actions.forEach((actionName, list) -> {
@@ -156,6 +216,11 @@ public class Thing {
         return array;
     }
 
+    /**
+     * Get the thing's events as a JSONArray.
+     *
+     * @return Event descriptions.
+     */
     public JSONArray getEventDescriptions() {
         JSONArray array = new JSONArray();
         this.events.forEach((event) -> {
@@ -164,16 +229,32 @@ public class Thing {
         return array;
     }
 
+    /**
+     * Add a property to this thing.
+     *
+     * @param property Property to add.
+     */
     public void addProperty(Property property) {
         this.properties.put(property.getName(), property);
     }
 
+    /**
+     * Remove a property from this thing.
+     *
+     * @param property Property to remove.
+     */
     public void removeProperty(Property property) {
         if (this.properties.containsKey(property.getName())) {
             this.properties.remove(property.getName());
         }
     }
 
+    /**
+     * Find a property by name.
+     *
+     * @param propertyName Name of the property to find
+     * @return Property if found, else null.
+     */
     public Property findProperty(String propertyName) {
         if (this.properties.containsKey(propertyName)) {
             return this.properties.get(propertyName);
@@ -182,6 +263,13 @@ public class Thing {
         return null;
     }
 
+    /**
+     * Get a property's value.
+     *
+     * @param propertyName Name of the property to get the value of
+     * @param <T>          Type of the property value
+     * @return Current property value if found, else null.
+     */
     public <T> T getProperty(String propertyName) {
         Property<T> prop = this.findProperty(propertyName);
         if (prop != null) {
@@ -191,10 +279,23 @@ public class Thing {
         return null;
     }
 
+    /**
+     * Determine whether or not this thing has a given property.
+     *
+     * @param propertyName The property to look for
+     * @return Indication of property presence.
+     */
     public boolean hasProperty(String propertyName) {
         return this.properties.containsKey(propertyName);
     }
 
+    /**
+     * Set a property value.
+     *
+     * @param propertyName Name of the property to set
+     * @param value        Value to set
+     * @param <T>          Type of the property value
+     */
     public <T> void setProperty(String propertyName, T value) {
         Property<T> prop = this.findProperty(propertyName);
         if (prop == null) {
@@ -204,6 +305,13 @@ public class Thing {
         prop.setValue(value);
     }
 
+    /**
+     * Get an action.
+     *
+     * @param actionName Name of the action
+     * @param actionId   ID of the action
+     * @return The requested action if found, else null.
+     */
     public Action getAction(String actionName, String actionId) {
         if (!this.actions.containsKey(actionName)) {
             return null;
@@ -220,15 +328,33 @@ public class Thing {
         return null;
     }
 
+    /**
+     * Add a new event and notify subscribers.
+     *
+     * @param event The event that occurred.
+     */
     public void addEvent(Event event) {
         this.events.add(event);
         this.eventNotify(event);
     }
 
+    /**
+     * Add an event description.
+     *
+     * @param name        Name of the event
+     * @param description Event description
+     */
     public void addEventDescription(String name, String description) {
         this.availableEvents.put(name, new AvailableEvent(description));
     }
 
+    /**
+     * Perform an action on the thing.
+     *
+     * @param actionName Name of the action
+     * @param args       Parameters needed for the action
+     * @return The action that was created.
+     */
     public Action performAction(String actionName, JSONObject args) {
         if (!this.availableActions.containsKey(actionName)) {
             return null;
@@ -248,6 +374,13 @@ public class Thing {
         }
     }
 
+    /**
+     * Add an action description.
+     *
+     * @param name        Name of the action
+     * @param description Description of the action
+     * @param cls         Class to instantiate for this action
+     */
     public void addActionDescription(String name,
                                      String description,
                                      Class cls) {
@@ -255,20 +388,36 @@ public class Thing {
         this.actions.put(name, new ArrayList<Action>());
     }
 
+    /**
+     * Add a new websocket subscriber.
+     *
+     * @param ws The websocket
+     */
     public void addSubscriber(WebThingServer.ThingHandler.ThingWebSocket ws) {
         this.subscribers.add(ws);
     }
 
+    /**
+     * Remove a websocket subscriber.
+     *
+     * @param ws The websocket
+     */
     public void removeSubscriber(WebThingServer.ThingHandler.ThingWebSocket ws) {
         if (this.subscribers.contains(ws)) {
             this.subscribers.remove(ws);
         }
 
         this.availableEvents.forEach((name, value) -> {
-            value.removeSubscriber(ws);
+            this.removeEventSubscriber(name, ws);
         });
     }
 
+    /**
+     * Add a new websocket subscriber to an event.
+     *
+     * @param name Name of the event
+     * @param ws   The websocket
+     */
     public void addEventSubscriber(String name,
                                    WebThingServer.ThingHandler.ThingWebSocket ws) {
         if (this.availableEvents.containsKey(name)) {
@@ -276,6 +425,12 @@ public class Thing {
         }
     }
 
+    /**
+     * Remove a websocket subscriber from an event.
+     *
+     * @param name Name of the event
+     * @param ws   The websocket
+     */
     public void removeEventSubscriber(String name,
                                       WebThingServer.ThingHandler.ThingWebSocket ws) {
         if (this.availableEvents.containsKey(name)) {
@@ -283,6 +438,11 @@ public class Thing {
         }
     }
 
+    /**
+     * Notify all subscribers of a property change.
+     *
+     * @param property The property that changed
+     */
     public void propertyNotify(Property property) {
         JSONObject json = new JSONObject();
         JSONObject inner = new JSONObject();
@@ -298,6 +458,11 @@ public class Thing {
         });
     }
 
+    /**
+     * Notify all subscribers of an action status change.
+     *
+     * @param action The action whose status changed
+     */
     public void actionNotify(Action action) {
         JSONObject json = new JSONObject();
 
@@ -311,6 +476,11 @@ public class Thing {
         });
     }
 
+    /**
+     * Notify all subscribers of an event.
+     *
+     * @param event The event that occurred
+     */
     public void eventNotify(Event event) {
         String eventName = event.getName();
         if (!this.availableEvents.containsKey(eventName)) {
@@ -335,47 +505,94 @@ public class Thing {
                             });
     }
 
+    /**
+     * Class to describe an event available for subscription.
+     */
     private class AvailableEvent {
         private String description;
         private Set<WebThingServer.ThingHandler.ThingWebSocket> subscribers;
 
+        /**
+         * Initialize the object.
+         *
+         * @param description The event description
+         */
         public AvailableEvent(String description) {
             this.description = description;
             this.subscribers = new HashSet<>();
         }
 
+        /**
+         * Get the event description.
+         *
+         * @return The description.
+         */
         public String getDescription() {
             return this.description;
         }
 
+        /**
+         * Add a websocket subscriber to the event.
+         *
+         * @param ws The websocket
+         */
         public void addSubscriber(WebThingServer.ThingHandler.ThingWebSocket ws) {
             this.subscribers.add(ws);
         }
 
+        /**
+         * Remove a websocket subscriber from the event.
+         *
+         * @param ws The websocket
+         */
         public void removeSubscriber(WebThingServer.ThingHandler.ThingWebSocket ws) {
             if (this.subscribers.contains(ws)) {
                 this.subscribers.remove(ws);
             }
         }
 
+        /**
+         * Get the set of subscribers for the event.
+         *
+         * @return The set of subscribers.
+         */
         public Set<WebThingServer.ThingHandler.ThingWebSocket> getSubscribers() {
             return this.subscribers;
         }
     }
 
+    /**
+     * Class to describe an action available to be taken.
+     */
     private class AvailableAction {
         private String description;
         private Class cls;
 
+        /**
+         * Initialize the object.
+         *
+         * @param description Description of the action
+         * @param cls         Class to instantiate for the action
+         */
         public AvailableAction(String description, Class cls) {
             this.description = description;
             this.cls = cls;
         }
 
+        /**
+         * Get the description of the action.
+         *
+         * @return The description.
+         */
         public String getDescription() {
             return this.description;
         }
 
+        /**
+         * Get the class to instantiate for the action.
+         *
+         * @return The class.
+         */
         public Class getCls() {
             return this.cls;
         }

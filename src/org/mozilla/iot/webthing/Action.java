@@ -1,8 +1,15 @@
+/**
+ * High-level Action base class implementation.
+ */
+
 package org.mozilla.iot.webthing;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * An Action represents an individual action on a thing.
+ */
 public class Action {
     private String id;
     private Thing thing;
@@ -13,10 +20,25 @@ public class Action {
     private String timeRequested;
     private String timeCompleted;
 
+    /**
+     * Initialize the object.
+     *
+     * @param id    ID of this action
+     * @param thing Thing this action belongs to
+     * @param name  Name of the action
+     */
     public Action(String id, Thing thing, String name) {
         this(id, thing, name, null);
     }
 
+    /**
+     * Initialize the object.
+     *
+     * @param id    ID of this action
+     * @param thing Thing this action belongs to
+     * @param name  Name of the action
+     * @param args  Parameters required by the action
+     */
     public Action(String id, Thing thing, String name, JSONObject args) {
         this.id = id;
         this.thing = thing;
@@ -28,6 +50,11 @@ public class Action {
         this.thing.actionNotify(this);
     }
 
+    /**
+     * Get the action description.
+     *
+     * @return Description of the action as a JSONObject.
+     */
     public JSONObject asActionDescription() {
         JSONObject obj = new JSONObject();
         JSONObject inner = new JSONObject();
@@ -48,34 +75,72 @@ public class Action {
         }
     }
 
+    /**
+     * Get this action's ID.
+     *
+     * @return The ID.
+     */
     public String getId() {
         return this.id;
     }
 
+    /**
+     * Get this action's name.
+     *
+     * @return The name.
+     */
     public String getName() {
         return this.name;
     }
 
+    /**
+     * Get this action's href.
+     *
+     * @return The href.
+     */
     public String getHref() {
         return this.href;
     }
 
+    /**
+     * Get this action's status.
+     *
+     * @return The status.
+     */
     public String getStatus() {
         return this.status;
     }
 
+    /**
+     * Get the thing associated with this action.
+     *
+     * @return The thing.
+     */
     public Thing getThing() {
         return this.thing;
     }
 
+    /**
+     * Get the time the action was requested.
+     *
+     * @return The time.
+     */
     public String getTimeRequested() {
         return this.timeRequested;
     }
 
+    /**
+     * Get the time the action was completed.
+     *
+     * @return The time.
+     */
     public String getTimeCompleted() {
         return this.timeCompleted;
     }
 
+    /**
+     * Start performing the action.
+     */
     public void start() {
         this.status = "pending";
         this.thing.actionNotify(this);
@@ -83,12 +148,21 @@ public class Action {
         this.finish();
     }
 
+    /**
+     * Override this with the code necessary to perform the action.
+     */
     public void performAction() {
     }
 
+    /**
+     * Override this with the code necessary to cancel the action.
+     */
     public void cancel() {
     }
 
+    /**
+     * Finish performing the action.
+     */
     public void finish() {
         this.status = "completed";
         this.timeCompleted = Utils.timestamp();

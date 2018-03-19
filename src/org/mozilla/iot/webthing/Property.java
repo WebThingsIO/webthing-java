@@ -1,3 +1,7 @@
+/**
+ * High-level Property base class implementation.
+ */
+
 package org.mozilla.iot.webthing;
 
 import org.json.JSONException;
@@ -5,12 +9,24 @@ import org.json.JSONObject;
 
 import java.util.Map;
 
+/**
+ * A Property represents an individual state value of a thing.
+ *
+ * @param <T> The type of the property value.
+ */
 public class Property<T> {
     private Thing thing;
     private String name;
     private PropertyDescription description;
     private T value;
 
+    /**
+     * Initialize the object.
+     *
+     * @param thing       Thing this property belongs to
+     * @param name        Name of the property
+     * @param description Description of the property
+     */
     public Property(Thing thing, String name, Map<String, Object> description) {
         this.thing = thing;
         this.name = name;
@@ -39,6 +55,11 @@ public class Property<T> {
         }
     }
 
+    /**
+     * Get the property description.
+     *
+     * @return Description of the property as an object.
+     */
     public JSONObject asPropertyDescription() {
         JSONObject obj = new JSONObject();
 
@@ -71,29 +92,60 @@ public class Property<T> {
         }
     }
 
+    /**
+     * Set the cached value of the property, making adjustments as necessary.
+     *
+     * @param value The value to set.
+     * @return The value that was set.
+     */
     public T setCachedValue(T value) {
         this.value = value;
         this.thing.propertyNotify(this);
         return this.value;
     }
 
+    /**
+     * Get the current property value.
+     *
+     * @return The current value.
+     */
     public T getValue() {
         return this.value;
     }
 
-    public T setValue(T value) {
-        return this.setCachedValue(value);
+    /**
+     * Set the current value of the property.
+     *
+     * @param value The value to set
+     */
+    public void setValue(T value) {
+        this.setCachedValue(value);
     }
 
+    /**
+     * Get the name of this property.
+     *
+     * @return The proeprty name.
+     */
     public String getName() {
         return this.name;
     }
 
+    /**
+     * Get the thing associated with this property.
+     *
+     * @return The thing.
+     */
     public Thing getThing() {
         return this.thing;
     }
 
-    private class PropertyDescription<T> {
+    /**
+     * Object to hold the property description metadata.
+     *
+     * @param <T> The type of the property value.
+     */
+    private static class PropertyDescription<T> {
         private String type;
         private String unit;
         private String description;
