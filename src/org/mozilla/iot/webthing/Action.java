@@ -14,7 +14,7 @@ public class Action {
     private String id;
     private Thing thing;
     private String name;
-    private JSONObject args;
+    private JSONObject input;
     private String href;
     private String status;
     private String timeRequested;
@@ -37,13 +37,13 @@ public class Action {
      * @param id    ID of this action
      * @param thing Thing this action belongs to
      * @param name  Name of the action
-     * @param args  Parameters required by the action
+     * @param input Any action inputs
      */
-    public Action(String id, Thing thing, String name, JSONObject args) {
+    public Action(String id, Thing thing, String name, JSONObject input) {
         this.id = id;
         this.thing = thing;
         this.name = name;
-        this.args = args;
+        this.input = input;
         this.href = String.format("/actions/%s/%s", this.name, this.id);
         this.status = "created";
         this.timeRequested = Utils.timestamp();
@@ -62,6 +62,10 @@ public class Action {
             inner.put("href", this.href);
             inner.put("timeRequested", this.timeRequested);
             inner.put("status", this.status);
+
+            if (this.input != null) {
+                inner.put("input", this.input);
+            }
 
             if (this.timeCompleted != null) {
                 inner.put("timeCompleted", this.timeCompleted);
@@ -136,6 +140,15 @@ public class Action {
      */
     public String getTimeCompleted() {
         return this.timeCompleted;
+    }
+
+    /**
+     * Get the inputs for this action.
+     *
+     * @return The inputs.
+     */
+    public JSONObject getInput() {
+        return input;
     }
 
     /**

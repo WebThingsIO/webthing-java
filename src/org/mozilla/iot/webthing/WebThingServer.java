@@ -73,21 +73,26 @@ public class WebThingServer extends RouterNanoHTTPD {
                              sslOptions.getProtocols());
         }
 
+        this.setRoutePrioritizer(new InsertionOrderRoutePrioritizer());
+
+        // These are matched in the order they are added.
+        addRoute("/properties/:propertyName",
+                 PropertyHandler.class,
+                 this.thing);
+        addRoute("/properties", PropertiesHandler.class, this.thing);
+        addRoute("/actions/:actionName/:actionId",
+                 ActionIDHandler.class,
+                 this.thing);
+        addRoute("/actions/:actionName", ActionHandler.class, this.thing);
+        addRoute("/actions", ActionsHandler.class, this.thing);
+        addRoute("/events/:eventName", EventHandler.class, this.thing);
+        addRoute("/events", EventsHandler.class, this.thing);
         addRoute("/",
                  ThingHandler.class,
                  this.thing,
                  this.ip,
                  this.port,
                  this.isTls);
-        addRoute("/properties", PropertiesHandler.class, this.thing);
-        addRoute("/properties/:propertyName",
-                 PropertyHandler.class,
-                 this.thing);
-        addRoute("/actions", ActionsHandler.class, this.thing);
-        addRoute("/actions/:actionName/:actionId",
-                 ActionHandler.class,
-                 this.thing);
-        addRoute("/events", EventsHandler.class, this.thing);
     }
 
     /**
@@ -507,10 +512,15 @@ public class WebThingServer extends RouterNanoHTTPD {
                         JSONArray actionNames = messageData.names();
                         for (int i = 0; i < actionNames.length(); ++i) {
                             String actionName = actionNames.getString(i);
-                            Action action = this.thing.performAction(actionName,
-                                                                     messageData
-                                                                             .getJSONObject(
-                                                                                     actionName));
+                            JSONObject params =
+                                    messageData.getJSONObject(actionName);
+                            JSONObject input = null;
+                            if (params.has("input")) {
+                                input = params.getJSONObject("input");
+                            }
+
+                            Action action =
+                                    this.thing.performAction(actionName, input);
 
                             (new ActionRunner(action)).start();
                         }
@@ -717,14 +727,16 @@ public class WebThingServer extends RouterNanoHTTPD {
                 JSONArray actionNames = json.names();
                 for (int i = 0; i < actionNames.length(); ++i) {
                     String actionName = actionNames.getString(i);
-                    Action action = thing.performAction(actionName,
-                                                        json.getJSONObject(
-                                                                actionName));
+                    JSONObject params = json.getJSONObject(actionName);
+                    JSONObject input = null;
+                    if (params.has("input")) {
+                        input = params.getJSONObject("input");
+                    }
 
-                    JSONObject inner = new JSONObject();
-                    inner.put("href", action.getHref());
-                    inner.put("status", action.getStatus());
-                    response.put(actionName, inner);
+                    Action action = thing.performAction(actionName, input);
+                    response.put(actionName,
+                                 action.asActionDescription()
+                                       .getJSONObject(actionName));
 
                     (new ActionRunner(action)).start();
                 }
@@ -740,9 +752,33 @@ public class WebThingServer extends RouterNanoHTTPD {
     }
 
     /**
-     * Handle a request to /actions/<action_name>/<action_id>.
+     * Handle a request to /actions/<action_name>.
      */
     public static class ActionHandler extends BaseHandler {
+        /**
+         * Handle a GET request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return The appropriate response.
+         */
+        @Override
+        public Response get(UriResource uriResource,
+                            Map<String, String> urlParams,
+                            IHTTPSession session) {
+            // TODO: this is not yet defined in the spec
+            return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
+                                                    "application/json",
+                                                    "");
+
+        }
+    }
+
+    /**
+     * Handle a request to /actions/<action_name>/<action_id>.
+     */
+    public static class ActionIDHandler extends BaseHandler {
         /**
          * Handle a GET request.
          *
@@ -845,6 +881,30 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                     "application/json",
                                                     thing.getEventDescriptions()
                                                          .toString());
+        }
+    }
+
+    /**
+     * Handle a request to /events/<event_name>.
+     */
+    public static class EventHandler extends BaseHandler {
+        /**
+         * Handle a GET request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return The appropriate response.
+         */
+        @Override
+        public Response get(UriResource uriResource,
+                            Map<String, String> urlParams,
+                            IHTTPSession session) {
+            // TODO: this is not yet defined in the spec
+            return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
+                                                    "application/json",
+                                                    "");
+
         }
     }
 }

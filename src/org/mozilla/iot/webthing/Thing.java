@@ -33,13 +33,6 @@ public class Thing {
 
     /**
      * Initialize the object.
-     */
-    public Thing() {
-        this("", "thing", "");
-    }
-
-    /**
-     * Initialize the object.
      *
      * @param name The thing's name
      */
@@ -89,23 +82,11 @@ public class Thing {
         JSONObject events = new JSONObject();
 
         this.availableActions.forEach((name, value) -> {
-            JSONObject inner = new JSONObject();
-
-            try {
-                inner.put("description", value.getDescription());
-                actions.put(name, inner);
-            } catch (JSONException e) {
-            }
+            actions.put(name, value.getMetadata());
         });
 
         this.availableEvents.forEach((name, value) -> {
-            JSONObject inner = new JSONObject();
-
-            try {
-                inner.put("description", value.getDescription());
-                events.put(name, inner);
-            } catch (JSONException e) {
-            }
+            events.put(name, value.getMetadata());
         });
 
         try {
@@ -339,23 +320,29 @@ public class Thing {
     }
 
     /**
-     * Add an event description.
+     * Add an available event.
      *
-     * @param name        Name of the event
-     * @param description Event description
+     * @param name     Name of the event
+     * @param metadata Event metadata, i.e. type, description, etc., as a Map
      */
-    public void addEventDescription(String name, String description) {
-        this.availableEvents.put(name, new AvailableEvent(description));
+    public void addAvailableEvent(String name, Map<String, Object> metadata) {
+        if (metadata == null) {
+            metadata = new HashMap<>();
+        }
+
+        metadata.put("href", String.format("/events/%s", name));
+
+        this.availableEvents.put(name, new AvailableEvent(metadata));
     }
 
     /**
      * Perform an action on the thing.
      *
      * @param actionName Name of the action
-     * @param args       Parameters needed for the action
+     * @param input      Any action inputs
      * @return The action that was created.
      */
-    public Action performAction(String actionName, JSONObject args) {
+    public Action performAction(String actionName, JSONObject input) {
         if (!this.availableActions.containsKey(actionName)) {
             return null;
         }
@@ -365,7 +352,7 @@ public class Thing {
             Constructor constructor =
                     cls.getConstructor(Thing.class, JSONObject.class);
             Action action =
-                    (Action)constructor.newInstance(new Object[]{this, args});
+                    (Action)constructor.newInstance(new Object[]{this, input});
             this.actions.get(actionName).add(action);
             return action;
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
@@ -375,17 +362,23 @@ public class Thing {
     }
 
     /**
-     * Add an action description.
+     * Add an available action.
      *
-     * @param name        Name of the action
-     * @param description Description of the action
-     * @param cls         Class to instantiate for this action
+     * @param name     Name of the action
+     * @param metadata Action metadata, i.e. type, description, etc., as a Map
+     * @param cls      Class to instantiate for this action
      */
-    public void addActionDescription(String name,
-                                     String description,
-                                     Class cls) {
-        this.availableActions.put(name, new AvailableAction(description, cls));
-        this.actions.put(name, new ArrayList<Action>());
+    public void addAvailableAction(String name,
+                                   Map<String, Object> metadata,
+                                   Class cls) {
+        if (metadata == null) {
+            metadata = new HashMap<>();
+        }
+
+        metadata.put("href", String.format("/actions/%s", name));
+
+        this.availableActions.put(name, new AvailableAction(metadata, cls));
+        this.actions.put(name, new ArrayList<>());
     }
 
     /**
@@ -488,13 +481,9 @@ public class Thing {
         }
 
         JSONObject json = new JSONObject();
-        JSONObject inner = new JSONObject();
-        JSONObject eventData = new JSONObject();
 
-        eventData.put("timestamp", event.getTime());
-        inner.put(eventName, eventData);
         json.put("messageType", "event");
-        json.put("data", inner);
+        json.put("data", event.asEventDescription());
 
         String message = json.toString();
 
@@ -509,26 +498,26 @@ public class Thing {
      * Class to describe an event available for subscription.
      */
     private class AvailableEvent {
-        private String description;
+        private Map<String, Object> metadata;
         private Set<WebThingServer.ThingHandler.ThingWebSocket> subscribers;
 
         /**
          * Initialize the object.
          *
-         * @param description The event description
+         * @param metadata The event metadata
          */
-        public AvailableEvent(String description) {
-            this.description = description;
+        public AvailableEvent(Map<String, Object> metadata) {
+            this.metadata = metadata;
             this.subscribers = new HashSet<>();
         }
 
         /**
-         * Get the event description.
+         * Get the event metadata.
          *
-         * @return The description.
+         * @return The metadata.
          */
-        public String getDescription() {
-            return this.description;
+        public Map<String, Object> getMetadata() {
+            return this.metadata;
         }
 
         /**
@@ -565,27 +554,27 @@ public class Thing {
      * Class to describe an action available to be taken.
      */
     private class AvailableAction {
-        private String description;
+        private Map<String, Object> metadata;
         private Class cls;
 
         /**
          * Initialize the object.
          *
-         * @param description Description of the action
-         * @param cls         Class to instantiate for the action
+         * @param metadata The action metadata
+         * @param cls      Class to instantiate for the action
          */
-        public AvailableAction(String description, Class cls) {
-            this.description = description;
+        public AvailableAction(Map<String, Object> metadata, Class cls) {
+            this.metadata = metadata;
             this.cls = cls;
         }
 
         /**
-         * Get the description of the action.
+         * Get the action metadata.
          *
-         * @return The description.
+         * @return The metadata.
          */
-        public String getDescription() {
-            return this.description;
+        public Map<String, Object> getMetadata() {
+            return this.metadata;
         }
 
         /**

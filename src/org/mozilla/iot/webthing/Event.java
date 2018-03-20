@@ -9,11 +9,13 @@ import org.json.JSONObject;
 
 /**
  * An Event represents an individual event from a thing.
+ *
+ * @param <T> The type of the event data.
  */
-public class Event {
+public class Event<T> {
     private Thing thing;
     private String name;
-    private String description;
+    private T data;
     private String time;
 
     /**
@@ -23,20 +25,20 @@ public class Event {
      * @param name  Name of the event
      */
     public Event(Thing thing, String name) {
-        this(thing, name, "");
+        this(thing, name, null);
     }
 
     /**
      * Initialize the object.
      *
-     * @param thing       Thing this event belongs to
-     * @param name        Name of the event
-     * @param description Description of the event
+     * @param thing Thing this event belongs to
+     * @param name  Name of the event
+     * @param data  Data associated with the event
      */
-    public Event(Thing thing, String name, String description) {
+    public Event(Thing thing, String name, T data) {
         this.thing = thing;
         this.name = name;
-        this.description = description;
+        this.data = data;
         this.time = Utils.timestamp();
     }
 
@@ -50,6 +52,11 @@ public class Event {
         JSONObject inner = new JSONObject();
         try {
             inner.put("timestamp", this.time);
+
+            if (this.data != null) {
+                inner.put("data", this.data);
+            }
+
             obj.put(this.name, inner);
             return obj;
 
@@ -77,12 +84,12 @@ public class Event {
     }
 
     /**
-     * Get the event's description.
+     * Get the event's data.
      *
-     * @return The description.
+     * @return The data.
      */
-    public String getDescription() {
-        return this.description;
+    public T getData() {
+        return this.data;
     }
 
     /**
