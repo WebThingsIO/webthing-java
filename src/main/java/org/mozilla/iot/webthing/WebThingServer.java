@@ -99,7 +99,7 @@ public class WebThingServer extends RouterNanoHTTPD {
      * Start listening for incoming connections.
      *
      * @param daemon Whether or not to daemonize the server
-     * @throws IOException
+     * @throws IOException on failure to listen on port
      */
     public void start(boolean daemon) throws IOException {
         this.jmdns = JmDNS.create(InetAddress.getLocalHost());
@@ -588,7 +588,7 @@ public class WebThingServer extends RouterNanoHTTPD {
     }
 
     /**
-     * Handle a request to /properties/<property>.
+     * Handle a request to /properties/&lt;property&gt;.
      */
     public static class PropertyHandler extends BaseHandler {
         /**
@@ -752,7 +752,7 @@ public class WebThingServer extends RouterNanoHTTPD {
     }
 
     /**
-     * Handle a request to /actions/<action_name>.
+     * Handle a request to /actions/&lt;action_name&gt;.
      */
     public static class ActionHandler extends BaseHandler {
         /**
@@ -776,7 +776,7 @@ public class WebThingServer extends RouterNanoHTTPD {
     }
 
     /**
-     * Handle a request to /actions/<action_name>/<action_id>.
+     * Handle a request to /actions/&lt;action_name&gt;/&lt;action_id&gt;.
      */
     public static class ActionIDHandler extends BaseHandler {
         /**
@@ -885,7 +885,7 @@ public class WebThingServer extends RouterNanoHTTPD {
     }
 
     /**
-     * Handle a request to /events/<event_name>.
+     * Handle a request to /events/&lt;event_name&gt;.
      */
     public static class EventHandler extends BaseHandler {
         /**

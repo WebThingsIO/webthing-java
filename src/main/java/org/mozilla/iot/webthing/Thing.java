@@ -167,7 +167,7 @@ public class Thing {
     /**
      * Get the thing's properties as a JSONObject.
      *
-     * @return Properties, i.e. name -> description.
+     * @return Properties, i.e. name: description.
      */
     public JSONObject getPropertyDescriptions() {
         JSONObject obj = new JSONObject();
