@@ -2,6 +2,34 @@
 
 Implementation of an HTTP [Web Thing](https://iot.mozilla.org/wot/).
 
+# Using
+
+## Gradle
+
+Add the following dependency to your project:
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.mozilla.iot</groupId>
+        <artifactId>webthing</artifactId>
+        <version>CURRENT_VERSION</version>
+    </dependency>
+</dependencies>
+```
+
+## Gradle
+
+Add the following dependency to your project:
+
+```
+dependencies {
+    runtime(
+        [group: 'org.mozilla.iot', name: 'webthing', version: 'CURRENT_VERSION'],
+    )
+}
+```
+
 # Example
 
 ```java
