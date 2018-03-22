@@ -30,6 +30,9 @@ public class Thing {
     private Map<String, List<Action>> actions;
     private List<Event> events;
     private Set<WebThingServer.ThingHandler.ThingWebSocket> subscribers;
+    private String hrefPrefix;
+    private String wsHref;
+    private String uiHref;
 
     /**
      * Initialize the object.
@@ -67,16 +70,62 @@ public class Thing {
         this.actions = new HashMap<>();
         this.events = new ArrayList<>();
         this.subscribers = new HashSet<>();
+        this.hrefPrefix = "";
+        this.wsHref = null;
+        this.uiHref = null;
+    }
+
+    /**
+     * Set the prefix of any hrefs associated with this thing.
+     *
+     * @param prefix The prefix
+     */
+    public void setHrefPrefix(String prefix) {
+        this.hrefPrefix = prefix;
+
+        this.availableActions.forEach((name, value) -> {
+            value.setHrefPrefix(prefix);
+        });
+
+        this.availableEvents.forEach((name, value) -> {
+            value.setHrefPrefix(prefix);
+        });
+
+        this.properties.forEach((name, value) -> {
+            value.setHrefPrefix(prefix);
+        });
+
+        this.actions.forEach((actionName, list) -> {
+            list.forEach((action) -> {
+                action.setHrefPrefix(prefix);
+            });
+        });
+    }
+
+    /**
+     * Set the href of this thing's websocket.
+     *
+     * @param href The href
+     */
+    public void setWsHref(String href) {
+        this.wsHref = href;
+    }
+
+    /**
+     * Set the href of this thing's custom UI.
+     *
+     * @param href The href
+     */
+    public void setUiHref(String href) {
+        this.uiHref = href;
     }
 
     /**
      * Return the thing state as a Thing Description.
      *
-     * @param wsPath The websocket URL, or null if not present
-     * @param uiPath href of a custom thing UI, or null if not present
      * @return Current thing state.
      */
-    public JSONObject asThingDescription(String wsPath, String uiPath) {
+    public JSONObject asThingDescription() {
         JSONObject obj = new JSONObject();
         JSONObject actions = new JSONObject();
         JSONObject events = new JSONObject();
@@ -91,7 +140,8 @@ public class Thing {
 
         try {
             obj.put("name", this.getName());
-            obj.put("href", "/");
+            obj.put("href",
+                    this.hrefPrefix.length() > 0 ? this.hrefPrefix : "/");
             obj.put("type", this.getType());
             obj.put("properties", this.getPropertyDescriptions());
             obj.put("actions", actions);
@@ -103,31 +153,33 @@ public class Thing {
 
             JSONObject propertiesLink = new JSONObject();
             propertiesLink.put("rel", "properties");
-            propertiesLink.put("href", "/properties");
+            propertiesLink.put("href",
+                               String.format("%s/properties", this.hrefPrefix));
             obj.accumulate("links", propertiesLink);
 
             JSONObject actionsLink = new JSONObject();
             actionsLink.put("rel", "actions");
-            actionsLink.put("href", "/actions");
+            actionsLink.put("href",
+                            String.format("%s/actions", this.hrefPrefix));
             obj.accumulate("links", actionsLink);
 
             JSONObject eventsLink = new JSONObject();
             eventsLink.put("rel", "events");
-            eventsLink.put("href", "/events");
+            eventsLink.put("href", String.format("%s/events", this.hrefPrefix));
             obj.accumulate("links", eventsLink);
 
-            if (wsPath != null) {
+            if (this.wsHref != null) {
                 JSONObject wsLink = new JSONObject();
                 wsLink.put("rel", "alternate");
-                wsLink.put("href", wsPath);
+                wsLink.put("href", this.wsHref);
                 obj.accumulate("links", wsLink);
             }
 
-            if (uiPath != null) {
+            if (this.uiHref != null) {
                 JSONObject uiLink = new JSONObject();
                 uiLink.put("rel", "alternate");
                 uiLink.put("mediaType", "text/html");
-                uiLink.put("href", uiPath);
+                uiLink.put("href", this.uiHref);
                 obj.accumulate("links", uiLink);
             }
 
@@ -216,6 +268,7 @@ public class Thing {
      * @param property Property to add.
      */
     public void addProperty(Property property) {
+        property.setHrefPrefix(this.hrefPrefix);
         this.properties.put(property.getName(), property);
     }
 
@@ -353,6 +406,8 @@ public class Thing {
                     cls.getConstructor(Thing.class, JSONObject.class);
             Action action =
                     (Action)constructor.newInstance(new Object[]{this, input});
+            action.setHrefPrefix(this.hrefPrefix);
+            this.actionNotify(action);
             this.actions.get(actionName).add(action);
             return action;
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
@@ -512,6 +567,16 @@ public class Thing {
         }
 
         /**
+         * Set the prefix of this action's href.
+         *
+         * @param prefix The prefix
+         */
+        public void setHrefPrefix(String prefix) {
+            String href = (String)this.metadata.get("href");
+            this.metadata.put("href", prefix + href);
+        }
+
+        /**
          * Get the event metadata.
          *
          * @return The metadata.
@@ -566,6 +631,16 @@ public class Thing {
         public AvailableAction(Map<String, Object> metadata, Class cls) {
             this.metadata = metadata;
             this.cls = cls;
+        }
+
+        /**
+         * Set the prefix of this action's href.
+         *
+         * @param prefix The prefix
+         */
+        public void setHrefPrefix(String prefix) {
+            String href = (String)this.metadata.get("href");
+            this.metadata.put("href", prefix + href);
         }
 
         /**

@@ -43,12 +43,14 @@ import org.mozilla.iot.webthing.Thing;
 import org.mozilla.iot.webthing.WebThingServer;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public class TestServer {
-    public static void main(String[] args) {
+    public static Thing makeThing() {
         Thing thing = new Thing("My Lamp", "thing", "A web connected lamp");
 
         Map<String, Object> onDescription = new HashMap<>();
@@ -88,10 +90,21 @@ public class TestServer {
         overheatedMetadata.put("unit", "celcius");
         thing.addAvailableEvent("overheated", overheatedMetadata);
 
+        return thing;
+    }
+
+    public static void main(String[] args) {
+        Thing thing = makeThing();
         WebThingServer server;
 
         try {
-            server = new WebThingServer(thing, 8888);
+            List<Thing> things = new ArrayList<>();
+            things.add(thing);
+
+            // If adding more than one thing here, be sure to set the second
+            // parameter to some string, which will be broadcast via mDNS.
+            // In the single thing case, the thing's name will be broadcast.
+            server = new WebThingServer(things, null, 8888);
 
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {

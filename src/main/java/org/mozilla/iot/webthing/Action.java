@@ -15,6 +15,7 @@ public class Action {
     private Thing thing;
     private String name;
     private JSONObject input;
+    private String hrefPrefix;
     private String href;
     private String status;
     private String timeRequested;
@@ -44,10 +45,19 @@ public class Action {
         this.thing = thing;
         this.name = name;
         this.input = input;
+        this.hrefPrefix = "";
         this.href = String.format("/actions/%s/%s", this.name, this.id);
         this.status = "created";
         this.timeRequested = Utils.timestamp();
-        this.thing.actionNotify(this);
+    }
+
+    /**
+     * Set the prefix of any hrefs associated with this action.
+     *
+     * @param prefix The prefix
+     */
+    public void setHrefPrefix(String prefix) {
+        this.hrefPrefix = prefix;
     }
 
     /**
@@ -59,7 +69,7 @@ public class Action {
         JSONObject obj = new JSONObject();
         JSONObject inner = new JSONObject();
         try {
-            inner.put("href", this.href);
+            inner.put("href", this.hrefPrefix + this.href);
             inner.put("timeRequested", this.timeRequested);
             inner.put("status", this.status);
 
@@ -103,7 +113,7 @@ public class Action {
      * @return The href.
      */
     public String getHref() {
-        return this.href;
+        return this.hrefPrefix + this.href;
     }
 
     /**

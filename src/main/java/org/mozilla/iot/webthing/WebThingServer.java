@@ -11,6 +11,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import javax.jmdns.JmDNS;
@@ -27,46 +29,62 @@ import fi.iki.elonen.router.RouterNanoHTTPD;
 public class WebThingServer extends RouterNanoHTTPD {
     private int port;
     private String ip;
-    private Thing thing;
+    private List<Thing> things;
+    private String name;
     private boolean isTls;
     private JmDNS jmdns;
 
     /**
      * Initialize the WebThingServer on port 80.
      *
-     * @param thing The Thing managed by this server
+     * @param things List of Things managed by this server
      * @throws IOException
+     * @throws NullPointerException
      */
-    public WebThingServer(Thing thing) throws IOException {
-        this(thing, 80, null);
+    public WebThingServer(List<Thing> things, String name)
+            throws IOException, NullPointerException {
+        this(things, name, 80, null);
     }
 
     /**
      * Initialize the WebThingServer.
      *
-     * @param thing The Thing managed by this server
-     * @param port  Port to listen on
+     * @param things List of Things managed by this server
+     * @param port   Port to listen on
      * @throws IOException
+     * @throws NullPointerException
      */
-    public WebThingServer(Thing thing, Integer port) throws IOException {
-        this(thing, port, null);
+    public WebThingServer(List<Thing> things, String name, Integer port)
+            throws IOException, NullPointerException {
+        this(things, name, port, null);
     }
 
     /**
      * Initialize the WebThingServer.
      *
-     * @param thing      The Thing managed by this server
+     * @param things     List of Things managed by this server
+     * @param name       Name of this device. This should be null if the server
+     *                   is only managing one thing.
      * @param port       Port to listen on
      * @param sslOptions SSL options to pass to the NanoHTTPD server
      * @throws IOException
+     * @throws NullPointerException
      */
-    public WebThingServer(Thing thing, Integer port, SSLOptions sslOptions)
-            throws IOException {
+    public WebThingServer(List<Thing> things,
+                          String name,
+                          Integer port,
+                          SSLOptions sslOptions)
+            throws IOException, NullPointerException {
         super(port);
         this.port = port;
-        this.thing = thing;
+        this.things = things;
         this.ip = Utils.getIP();
         this.isTls = sslOptions != null;
+
+        if (things.size() > 1 && name == null) {
+            throw new NullPointerException(
+                    "name must be set when managing multiple things");
+        }
 
         if (this.isTls) {
             super.makeSecure(sslOptions.getSocketFactory(),
@@ -75,24 +93,64 @@ public class WebThingServer extends RouterNanoHTTPD {
 
         this.setRoutePrioritizer(new InsertionOrderRoutePrioritizer());
 
-        // These are matched in the order they are added.
-        addRoute("/properties/:propertyName",
-                 PropertyHandler.class,
-                 this.thing);
-        addRoute("/properties", PropertiesHandler.class, this.thing);
-        addRoute("/actions/:actionName/:actionId",
-                 ActionIDHandler.class,
-                 this.thing);
-        addRoute("/actions/:actionName", ActionHandler.class, this.thing);
-        addRoute("/actions", ActionsHandler.class, this.thing);
-        addRoute("/events/:eventName", EventHandler.class, this.thing);
-        addRoute("/events", EventsHandler.class, this.thing);
-        addRoute("/",
-                 ThingHandler.class,
-                 this.thing,
-                 this.ip,
-                 this.port,
-                 this.isTls);
+        if (things.size() > 1) {
+            String wsBase = String.format("%s://%s:%d/",
+                                          this.isTls ? "wss" : "ws",
+                                          this.ip,
+                                          this.port);
+            for (int i = 0; i < things.size(); ++i) {
+                Thing thing = things.get(i);
+                thing.setHrefPrefix(String.format("/%d", i));
+                thing.setWsHref(wsBase + Integer.toString(i));
+            }
+
+            this.name = name;
+
+            // These are matched in the order they are added.
+            addRoute("/:thingId/properties/:propertyName",
+                     PropertyHandler.class,
+                     this.things);
+            addRoute("/:thingId/properties",
+                     PropertiesHandler.class,
+                     this.things);
+            addRoute("/:thingId/actions/:actionName/:actionId",
+                     ActionIDHandler.class,
+                     this.things);
+            addRoute("/:thingId/actions/:actionName",
+                     ActionHandler.class,
+                     this.things);
+            addRoute("/:thingId/actions", ActionsHandler.class, this.things);
+            addRoute("/:thingId/events/:eventName",
+                     EventHandler.class,
+                     this.things);
+            addRoute("/:thingId/events", EventsHandler.class, this.things);
+            addRoute("/:thingId", ThingHandler.class, this.things);
+            addRoute("/", ThingsHandler.class, this.things);
+        } else {
+            String wsHref = String.format("%s://%s:%d",
+                                          this.isTls ? "wss" : "ws",
+                                          this.ip,
+                                          this.port);
+
+            Thing thing = things.get(0);
+            thing.setWsHref(wsHref);
+
+            this.name = thing.getName();
+
+            // These are matched in the order they are added.
+            addRoute("/properties/:propertyName",
+                     PropertyHandler.class,
+                     this.things);
+            addRoute("/properties", PropertiesHandler.class, this.things);
+            addRoute("/actions/:actionName/:actionId",
+                     ActionIDHandler.class,
+                     this.things);
+            addRoute("/actions/:actionName", ActionHandler.class, this.things);
+            addRoute("/actions", ActionsHandler.class, this.things);
+            addRoute("/events/:eventName", EventHandler.class, this.things);
+            addRoute("/events", EventsHandler.class, this.things);
+            addRoute("/", ThingHandler.class, this.things);
+        }
     }
 
     /**
@@ -109,7 +167,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                                    this.ip,
                                    this.port);
         ServiceInfo serviceInfo = ServiceInfo.create("_http._tcp.local",
-                                                     this.thing.getName(),
+                                                     this.name,
                                                      "_webthing",
                                                      this.port,
                                                      url);
@@ -329,6 +387,65 @@ public class WebThingServer extends RouterNanoHTTPD {
                 return null;
             }
         }
+
+        /**
+         * Get the thing this request is for.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param session     The HTTP session
+         * @return The thing, or null if not found.
+         */
+        public Thing getThing(UriResource uriResource, IHTTPSession session) {
+            List<Thing> things = uriResource.initParameter(0, ArrayList.class);
+
+            if (things.size() > 1) {
+                String thingId = this.getUriParam(session.getUri(), 1);
+
+                int id;
+                try {
+                    id = Integer.parseInt(thingId);
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+
+                if (id >= things.size()) {
+                    return null;
+                }
+
+                return things.get(id);
+            } else {
+                return things.get(0);
+            }
+        }
+    }
+
+    /**
+     * Handle a request to / when the server manages multiple things.
+     */
+    public static class ThingsHandler extends BaseHandler {
+        /**
+         * Handle a GET request, including websocket requests.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return The appropriate response.
+         */
+        @Override
+        public Response get(UriResource uriResource,
+                            Map<String, String> urlParams,
+                            IHTTPSession session) {
+            List<Thing> things = uriResource.initParameter(0, ArrayList.class);
+
+            JSONArray list = new JSONArray();
+            for (Thing thing : things) {
+                list.put(thing.asThingDescription());
+            }
+
+            return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
+                                                    "application/json",
+                                                    list.toString());
+        }
     }
 
     /**
@@ -347,10 +464,12 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
-            Thing thing = uriResource.initParameter(0, Thing.class);
-            String ip = uriResource.initParameter(1, String.class);
-            Integer port = uriResource.initParameter(2, Integer.class);
-            Boolean isTls = uriResource.initParameter(3, Boolean.class);
+            Thing thing = this.getThing(uriResource, session);
+            if (thing == null) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                        null,
+                                                        null);
+            }
 
             Map<String, String> headers = session.getHeaders();
             if (isWebSocketRequested(session)) {
@@ -390,16 +509,10 @@ public class WebThingServer extends RouterNanoHTTPD {
                 return handshakeResponse;
             }
 
-            String wsPath = String.format("%s://%s:%d/",
-                                          isTls ? "wss" : "ws",
-                                          ip,
-                                          port);
-
             return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                     "application/json",
-                                                    thing.asThingDescription(
-                                                            wsPath,
-                                                            null).toString());
+                                                    thing.asThingDescription()
+                                                         .toString());
         }
 
         /**
@@ -580,6 +693,13 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
+            Thing thing = this.getThing(uriResource, session);
+            if (thing == null) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                        null,
+                                                        null);
+            }
+
             // TODO: this is not yet defined in the spec
             return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                     "application/json",
@@ -592,6 +712,24 @@ public class WebThingServer extends RouterNanoHTTPD {
      */
     public static class PropertyHandler extends BaseHandler {
         /**
+         * Get the property name from the URI.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param session     The HTTP session
+         * @return The property name.
+         */
+        public String getPropertyName(UriResource uriResource,
+                                      IHTTPSession session) {
+            List<Thing> things = uriResource.initParameter(0, ArrayList.class);
+
+            if (things.size() > 1) {
+                return this.getUriParam(session.getUri(), 3);
+            } else {
+                return this.getUriParam(session.getUri(), 2);
+            }
+        }
+
+        /**
          * Handle a GET request.
          *
          * @param uriResource The URI resource that was matched
@@ -603,8 +741,14 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
-            Thing thing = uriResource.initParameter(0, Thing.class);
-            String propertyName = this.getUriParam(session.getUri(), 2);
+            Thing thing = this.getThing(uriResource, session);
+            if (thing == null) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                        null,
+                                                        null);
+            }
+
+            String propertyName = this.getPropertyName(uriResource, session);
             if (!thing.hasProperty(propertyName)) {
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
                                                         null,
@@ -641,8 +785,14 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response put(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
-            Thing thing = uriResource.initParameter(0, Thing.class);
-            String propertyName = this.getUriParam(session.getUri(), 2);
+            Thing thing = this.getThing(uriResource, session);
+            if (thing == null) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                        null,
+                                                        null);
+            }
+
+            String propertyName = this.getPropertyName(uriResource, session);
             if (!thing.hasProperty(propertyName)) {
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
                                                         null,
@@ -694,7 +844,13 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
-            Thing thing = uriResource.initParameter(0, Thing.class);
+            Thing thing = this.getThing(uriResource, session);
+            if (thing == null) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                        null,
+                                                        null);
+            }
+
             return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                     "application/json",
                                                     thing.getActionDescriptions()
@@ -713,7 +869,12 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response post(UriResource uriResource,
                              Map<String, String> urlParams,
                              IHTTPSession session) {
-            Thing thing = uriResource.initParameter(0, Thing.class);
+            Thing thing = this.getThing(uriResource, session);
+            if (thing == null) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                        null,
+                                                        null);
+            }
 
             JSONObject json = this.parseBody(session);
             if (json == null) {
@@ -767,6 +928,13 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
+            Thing thing = this.getThing(uriResource, session);
+            if (thing == null) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                        null,
+                                                        null);
+            }
+
             // TODO: this is not yet defined in the spec
             return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                     "application/json",
@@ -780,6 +948,42 @@ public class WebThingServer extends RouterNanoHTTPD {
      */
     public static class ActionIDHandler extends BaseHandler {
         /**
+         * Get the action name from the URI.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param session     The HTTP session
+         * @return The property name.
+         */
+        public String getActionName(UriResource uriResource,
+                                    IHTTPSession session) {
+            List<Thing> things = uriResource.initParameter(0, ArrayList.class);
+
+            if (things.size() > 1) {
+                return this.getUriParam(session.getUri(), 3);
+            } else {
+                return this.getUriParam(session.getUri(), 2);
+            }
+        }
+
+        /**
+         * Get the action ID from the URI.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param session     The HTTP session
+         * @return The property name.
+         */
+        public String getActionId(UriResource uriResource,
+                                  IHTTPSession session) {
+            List<Thing> things = uriResource.initParameter(0, ArrayList.class);
+
+            if (things.size() > 1) {
+                return this.getUriParam(session.getUri(), 4);
+            } else {
+                return this.getUriParam(session.getUri(), 3);
+            }
+        }
+
+        /**
          * Handle a GET request.
          *
          * @param uriResource The URI resource that was matched
@@ -791,9 +995,15 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
-            Thing thing = uriResource.initParameter(0, Thing.class);
-            String actionName = this.getUriParam(session.getUri(), 2);
-            String actionId = this.getUriParam(session.getUri(), 3);
+            Thing thing = this.getThing(uriResource, session);
+            if (thing == null) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                        null,
+                                                        null);
+            }
+
+            String actionName = this.getActionName(uriResource, session);
+            String actionId = this.getActionId(uriResource, session);
 
             Action action = thing.getAction(actionName, actionId);
             if (action == null) {
@@ -821,6 +1031,13 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response put(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
+            Thing thing = this.getThing(uriResource, session);
+            if (thing == null) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                        null,
+                                                        null);
+            }
+
             // TODO: this is not yet defined in the spec
             return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                     "application/json",
@@ -840,9 +1057,15 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response delete(UriResource uriResource,
                                Map<String, String> urlParams,
                                IHTTPSession session) {
-            Thing thing = uriResource.initParameter(0, Thing.class);
-            String actionName = this.getUriParam(session.getUri(), 2);
-            String actionId = this.getUriParam(session.getUri(), 3);
+            Thing thing = this.getThing(uriResource, session);
+            if (thing == null) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                        null,
+                                                        null);
+            }
+
+            String actionName = this.getActionName(uriResource, session);
+            String actionId = this.getActionId(uriResource, session);
 
             Action action = thing.getAction(actionName, actionId);
             if (action == null) {
@@ -876,7 +1099,13 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
-            Thing thing = uriResource.initParameter(0, Thing.class);
+            Thing thing = this.getThing(uriResource, session);
+            if (thing == null) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                        null,
+                                                        null);
+            }
+
             return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                     "application/json",
                                                     thing.getEventDescriptions()
@@ -900,6 +1129,13 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
+            Thing thing = this.getThing(uriResource, session);
+            if (thing == null) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                        null,
+                                                        null);
+            }
+
             // TODO: this is not yet defined in the spec
             return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                     "application/json",

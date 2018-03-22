@@ -17,6 +17,8 @@ import java.util.Map;
 public class Property<T> {
     private Thing thing;
     private String name;
+    private String hrefPrefix;
+    private String href;
     private Map<String, Object> metadata;
     private T value;
 
@@ -49,12 +51,23 @@ public class Property<T> {
         this.thing = thing;
         this.name = name;
         this.value = value;
+        this.hrefPrefix = "";
+        this.href = String.format("/properties/%s", this.name);
+
         if (metadata == null) {
             this.metadata = new HashMap<>();
         } else {
             this.metadata = metadata;
         }
-        this.metadata.put("href", String.format("/properties/%s", this.name));
+    }
+
+    /**
+     * Set the prefix of any hrefs associated with this property.
+     *
+     * @param prefix The prefix
+     */
+    public void setHrefPrefix(String prefix) {
+        this.hrefPrefix = prefix;
     }
 
     /**
@@ -63,7 +76,9 @@ public class Property<T> {
      * @return Description of the property as an object.
      */
     public JSONObject asPropertyDescription() {
-        return new JSONObject(this.metadata);
+        JSONObject description = new JSONObject(this.metadata);
+        description.put("href", this.hrefPrefix + this.href);
+        return description;
     }
 
     /**
