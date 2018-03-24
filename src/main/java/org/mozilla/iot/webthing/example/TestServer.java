@@ -1,4 +1,4 @@
-package org.mozilla.iot.webthing.test;
+package org.mozilla.iot.webthing.example;
 
 import org.json.JSONObject;
 import org.mozilla.iot.webthing.Action;
