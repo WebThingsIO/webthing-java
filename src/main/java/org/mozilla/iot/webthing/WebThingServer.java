@@ -1067,19 +1067,15 @@ public class WebThingServer extends RouterNanoHTTPD {
             String actionName = this.getActionName(uriResource, session);
             String actionId = this.getActionId(uriResource, session);
 
-            Action action = thing.getAction(actionName, actionId);
-            if (action == null) {
+            if (thing.removeAction(actionName, actionId)) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.NO_CONTENT,
+                                                        null,
+                                                        null);
+            } else {
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
                                                         null,
                                                         null);
             }
-
-            action.cancel();
-
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.NO_CONTENT,
-                                                    null,
-                                                    null);
-
         }
     }
 

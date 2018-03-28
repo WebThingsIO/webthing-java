@@ -417,6 +417,24 @@ public class Thing {
     }
 
     /**
+     * Remove an existing action.
+     *
+     * @param actionName name of the action
+     * @param actionId   ID of the action
+     * @return Boolean indicating the presence of the action.
+     */
+    public boolean removeAction(String actionName, String actionId) {
+        Action action = this.getAction(actionName, actionId);
+        if (action == null) {
+            return false;
+        }
+
+        action.cancel();
+        this.actions.get(actionName).remove(action);
+        return true;
+    }
+
+    /**
      * Add an available action.
      *
      * @param name     Name of the action
