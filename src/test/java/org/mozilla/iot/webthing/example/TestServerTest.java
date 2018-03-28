@@ -6,10 +6,7 @@ import org.junit.Test;
  * @author Tim Hinkes (timmeey@timmeey.de)
  */
 public class TestServerTest {
-
     @Test
-    public void testTestServer(){
-
+    public void testTestServer() {
     }
-
 }
