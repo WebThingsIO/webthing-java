@@ -5,7 +5,7 @@ import org.junit.Test;
 /**
  * @author Tim Hinkes (timmeey@timmeey.de)
  */
-public class TestServerTest {
+public class TestServerExample {
     @Test
     public void testTestServer() {
     }

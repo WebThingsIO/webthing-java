@@ -1,37 +1,25 @@
 package org.mozilla.iot.webthing.example;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import org.json.JSONObject;
 import org.mozilla.iot.webthing.Action;
 import org.mozilla.iot.webthing.Event;
 import org.mozilla.iot.webthing.Property;
 import org.mozilla.iot.webthing.Thing;
 import org.mozilla.iot.webthing.Value;
-import org.mozilla.iot.webthing.WebThingServer;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+/**
+ * ExampleDimmableLight.
+ * A Dimmable light, that loggs received commands on/off etc. to std::out
+ */
+public class ExampleDimmableLight {
 
-public class TestServer {
-    public static Thing makeThing() {
-        Thing thing = new Thing("My Lamp", "thing", "A web connected lamp");
+    private final Thing thing;
 
-        Map<String, Object> onDescription = new HashMap<>();
-        onDescription.put("type", "boolean");
-        onDescription.put("description", "Whether the lamp is turned on");
-        //noop for state change
-        thing.addProperty(new Property(thing, "on", onDescription, new Value(on -> {},true)));
-
-        Map<String, Object> levelDescription = new HashMap<>();
-        levelDescription.put("type", "number");
-        levelDescription.put("description", "The level of light from 0-100");
-        levelDescription.put("minimum", 0);
-        levelDescription.put("maximum", 100);
-        //noop consumer for level
-        thing.addProperty(new Property(thing, "level", levelDescription, new Value(level -> {},50)));
+    public ExampleDimmableLight(){
+        this.thing =  new Thing("My Lamp", "dimmableLight", "A web connected lamp");
 
         Map<String, Object> fadeMetadata = new HashMap<>();
         Map<String, Object> fadeInput = new HashMap<>();
@@ -56,36 +44,48 @@ public class TestServer {
             "The lamp has exceeded its safe operating temperature");
         overheatedMetadata.put("type", "number");
         overheatedMetadata.put("unit", "celcius");
+
+
+
+        thing.addProperty(getOnProperty());
+
+        thing.addProperty(getLevelProperty());
+
         thing.addAvailableEvent("overheated", overheatedMetadata);
-
-        return thing;
     }
 
-    public static void main(String[] args) {
-        Thing thing = makeThing();
-        WebThingServer server;
-
-        try {
-            List<Thing> things = new ArrayList<>();
-            things.add(thing);
-
-            // If adding more than one thing here, be sure to set the second
-            // parameter to some string, which will be broadcast via mDNS.
-            // In the single thing case, the thing's name will be broadcast.
-            server = new WebThingServer(things, null, 8888);
-
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    server.stop();
-                }
-            });
-
-            server.start(false);
-        } catch (IOException e) {
-            System.out.println(e);
-            System.exit(1);
-        }
+    private Property getOnProperty() {
+        Map<String, Object> onDescription = new HashMap<>();
+        onDescription.put("type", "boolean");
+        onDescription.put("description", "Whether the lamp is turned on");
+        Value<Boolean> on = new Value<>(
+            //here you could send a signal to the GPIO that switches the lamp off
+            isOn -> System.out.printf("On-State is now  %s\n",isOn),
+            true);
+        return new Property(thing, "on", onDescription, on);
     }
+
+    private Property getLevelProperty() {
+        Map<String, Object> levelDescription = new HashMap<>();
+        levelDescription.put("type", "number");
+        levelDescription.put("description", "The level of light from 0-100");
+        levelDescription.put("minimum", 0);
+        levelDescription.put("maximum", 100);
+
+        Value<Double> level = new Value<>(
+            //here you could send a signal to the GPIO that controls the brightness
+            l -> System.out.printf("New light level is %s",l),
+            0.0);
+
+        return new Property(thing, "level",
+            levelDescription, level);
+    }
+
+    public Thing getThing(){
+        return this.thing;
+    }
+
+
 
     public static class OverheatedEvent extends Event {
         public OverheatedEvent(Thing thing, int data) {
@@ -112,3 +112,5 @@ public class TestServer {
         }
     }
 }
+
+

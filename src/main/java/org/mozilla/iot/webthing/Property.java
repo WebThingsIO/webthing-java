@@ -20,7 +20,7 @@ public class Property<T> {
     private String hrefPrefix;
     private String href;
     private Map<String, Object> metadata;
-    private T value;
+    private Value<T> value;
 
     /**
      * Initialize the object.
@@ -47,7 +47,7 @@ public class Property<T> {
     public Property(Thing thing,
                     String name,
                     Map<String, Object> metadata,
-                    T value) {
+        Value<T> value) {
         this.thing = thing;
         this.name = name;
         this.value = value;
@@ -59,6 +59,8 @@ public class Property<T> {
         } else {
             this.metadata = metadata;
         }
+        //Adds the property change observer, to notify the Thing about a property change
+        this.value.addObserver((a,b)->this.thing.propertyNotify(this));
     }
 
     /**
@@ -82,24 +84,12 @@ public class Property<T> {
     }
 
     /**
-     * Set the cached value of the property, making adjustments as necessary.
-     *
-     * @param value The value to set.
-     * @return The value that was set.
-     */
-    public T setCachedValue(T value) {
-        this.value = value;
-        this.thing.propertyNotify(this);
-        return this.value;
-    }
-
-    /**
      * Get the current property value.
      *
      * @return The current value.
      */
     public T getValue() {
-        return this.value;
+        return this.value.get();
     }
 
     /**
@@ -108,7 +98,7 @@ public class Property<T> {
      * @param value The value to set
      */
     public void setValue(T value) {
-        this.setCachedValue(value);
+        this.value.set(value);
     }
 
     /**
