@@ -1,7 +1,6 @@
 /**
  * Utility functions.
  */
-
 package org.mozilla.iot.webthing;
 
 import java.net.Inet4Address;

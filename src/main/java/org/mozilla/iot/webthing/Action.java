@@ -1,7 +1,6 @@
 /**
  * High-level Action base class implementation.
  */
-
 package org.mozilla.iot.webthing;
 
 import org.json.JSONException;
@@ -83,7 +82,6 @@ public class Action {
 
             obj.put(this.name, inner);
             return obj;
-
         } catch (JSONException e) {
             return null;
         }

@@ -1,7 +1,6 @@
 /**
  * High-level Thing base class implementation.
  */
-
 package org.mozilla.iot.webthing;
 
 import org.json.JSONArray;
