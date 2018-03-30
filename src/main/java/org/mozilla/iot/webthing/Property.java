@@ -1,7 +1,6 @@
 /**
  * High-level Property base class implementation.
  */
-
 package org.mozilla.iot.webthing;
 
 import org.json.JSONObject;
@@ -20,16 +19,17 @@ public class Property<T> {
     private String hrefPrefix;
     private String href;
     private Map<String, Object> metadata;
-    private T value;
+    private Value<T> value;
 
     /**
      * Initialize the object.
      *
      * @param thing Thing this property belongs to
      * @param name  Name of the property
+     * @param value Value object to hold the property value
      */
-    public Property(Thing thing, String name) {
-        this(thing, name, null, null);
+    public Property(Thing thing, String name, Value<T> value) {
+        this(thing, name, value, null);
     }
 
     /**
@@ -37,17 +37,14 @@ public class Property<T> {
      *
      * @param thing    Thing this property belongs to
      * @param name     Name of the property
+     * @param value    Value object to hold the property value
      * @param metadata Property metadata, i.e. type, description, unit, etc., as
      *                 a Map
      */
-    public Property(Thing thing, String name, Map<String, Object> metadata) {
-        this(thing, name, metadata, null);
-    }
-
     public Property(Thing thing,
                     String name,
-                    Map<String, Object> metadata,
-                    T value) {
+                    Value<T> value,
+                    Map<String, Object> metadata) {
         this.thing = thing;
         this.name = name;
         this.value = value;
@@ -59,6 +56,10 @@ public class Property<T> {
         } else {
             this.metadata = metadata;
         }
+
+        // Add the property change observer to notify the Thing about a
+        // property change
+        this.value.addObserver((a, b) -> this.thing.propertyNotify(this));
     }
 
     /**
@@ -82,24 +83,12 @@ public class Property<T> {
     }
 
     /**
-     * Set the cached value of the property, making adjustments as necessary.
-     *
-     * @param value The value to set.
-     * @return The value that was set.
-     */
-    public T setCachedValue(T value) {
-        this.value = value;
-        this.thing.propertyNotify(this);
-        return this.value;
-    }
-
-    /**
      * Get the current property value.
      *
      * @return The current value.
      */
     public T getValue() {
-        return this.value;
+        return this.value.get();
     }
 
     /**
@@ -108,7 +97,7 @@ public class Property<T> {
      * @param value The value to set
      */
     public void setValue(T value) {
-        this.setCachedValue(value);
+        this.value.set(value);
     }
 
     /**

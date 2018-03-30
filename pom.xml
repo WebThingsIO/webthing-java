@@ -6,7 +6,7 @@
 
     <groupId>org.mozilla.iot</groupId>
     <artifactId>webthing</artifactId>
-    <version>0.4.1</version>
+    <version>0.5.0</version>
 
     <name>WebThing</name>
     <description>Implementation of an HTTP Web Thing.</description>
@@ -46,6 +46,17 @@
             </roles>
             <properties>
                 <picUrl>https://avatars1.githubusercontent.com/u/457381</picUrl>
+            </properties>
+        </developer>
+        <developer>
+            <id>Timmeey</id>
+            <name>Tim Hinkes</name>
+            <url>https://github.com/Timmeey</url>
+            <roles>
+                <role>Developer</role>
+            </roles>
+            <properties>
+                <picUrl>https://avatars2.githubusercontent.com/u/1174542</picUrl>
             </properties>
         </developer>
     </developers>

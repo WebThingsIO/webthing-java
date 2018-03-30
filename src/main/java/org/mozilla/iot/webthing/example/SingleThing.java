@@ -5,6 +5,7 @@ import org.mozilla.iot.webthing.Action;
 import org.mozilla.iot.webthing.Event;
 import org.mozilla.iot.webthing.Property;
 import org.mozilla.iot.webthing.Thing;
+import org.mozilla.iot.webthing.Value;
 import org.mozilla.iot.webthing.WebThingServer;
 
 import java.io.IOException;
@@ -14,21 +15,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class TestServer {
+public class SingleThing {
     public static Thing makeThing() {
         Thing thing = new Thing("My Lamp", "thing", "A web connected lamp");
 
         Map<String, Object> onDescription = new HashMap<>();
         onDescription.put("type", "boolean");
         onDescription.put("description", "Whether the lamp is turned on");
-        thing.addProperty(new Property(thing, "on", onDescription, true));
+        // noop for state change
+        thing.addProperty(new Property(thing, "on", new Value(true, on -> {
+        }), onDescription));
 
         Map<String, Object> levelDescription = new HashMap<>();
         levelDescription.put("type", "number");
         levelDescription.put("description", "The level of light from 0-100");
         levelDescription.put("minimum", 0);
         levelDescription.put("maximum", 100);
-        thing.addProperty(new Property(thing, "level", levelDescription, 50));
+        // noop consumer for level
+        thing.addProperty(new Property(thing, "level", new Value(50, level -> {
+        }), levelDescription));
 
         Map<String, Object> fadeMetadata = new HashMap<>();
         Map<String, Object> fadeInput = new HashMap<>();
@@ -52,7 +57,7 @@ public class TestServer {
         overheatedMetadata.put("description",
                                "The lamp has exceeded its safe operating temperature");
         overheatedMetadata.put("type", "number");
-        overheatedMetadata.put("unit", "celcius");
+        overheatedMetadata.put("unit", "celsius");
         thing.addAvailableEvent("overheated", overheatedMetadata);
 
         return thing;

@@ -1,7 +1,6 @@
 /**
  * High-level Event base class implementation.
  */
-
 package org.mozilla.iot.webthing;
 
 import org.json.JSONException;
@@ -59,7 +58,6 @@ public class Event<T> {
 
             obj.put(this.name, inner);
             return obj;
-
         } catch (JSONException e) {
             return null;
         }

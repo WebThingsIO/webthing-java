@@ -1,7 +1,6 @@
 /**
  * Java Web Thing server implementation.
  */
-
 package org.mozilla.iot.webthing;
 
 import org.json.JSONArray;
@@ -297,7 +296,6 @@ public class WebThingServer extends RouterNanoHTTPD {
             return NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
                                                     null,
                                                     null);
-
         }
 
         /**
@@ -314,7 +312,6 @@ public class WebThingServer extends RouterNanoHTTPD {
             return NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
                                                     null,
                                                     null);
-
         }
 
         /**
@@ -331,7 +328,6 @@ public class WebThingServer extends RouterNanoHTTPD {
             return NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
                                                     null,
                                                     null);
-
         }
 
         /**
@@ -350,7 +346,6 @@ public class WebThingServer extends RouterNanoHTTPD {
             return NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
                                                     null,
                                                     null);
-
         }
 
         /**
@@ -617,8 +612,21 @@ public class WebThingServer extends RouterNanoHTTPD {
                         JSONArray propertyNames = messageData.names();
                         for (int i = 0; i < propertyNames.length(); ++i) {
                             String propertyName = propertyNames.getString(i);
-                            this.thing.setProperty(propertyName,
-                                                   messageData.get(propertyName));
+                            try {
+                                this.thing.setProperty(propertyName,
+                                                       messageData.get(
+                                                               propertyName));
+                            } catch (IllegalArgumentException e) {
+                                JSONObject error = new JSONObject();
+                                JSONObject inner = new JSONObject();
+
+                                inner.put("status", "403 Forbidden");
+                                inner.put("message", "Read-only property");
+                                error.put("messageType", "error");
+                                error.put("data", inner);
+
+                                this.sendMessage(inner.toString());
+                            }
                         }
                         break;
                     case "requestAction":
@@ -824,6 +832,10 @@ public class WebThingServer extends RouterNanoHTTPD {
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
                                                         null,
                                                         null);
+            } catch (IllegalArgumentException e) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.FORBIDDEN,
+                                                        null,
+                                                        null);
             }
         }
     }
@@ -939,7 +951,6 @@ public class WebThingServer extends RouterNanoHTTPD {
             return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                     "application/json",
                                                     "");
-
         }
     }
 
@@ -1016,7 +1027,6 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                     "application/json",
                                                     action.asActionDescription()
                                                           .toString());
-
         }
 
         /**
@@ -1042,7 +1052,6 @@ public class WebThingServer extends RouterNanoHTTPD {
             return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                     "application/json",
                                                     "");
-
         }
 
         /**
@@ -1136,7 +1145,6 @@ public class WebThingServer extends RouterNanoHTTPD {
             return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                     "application/json",
                                                     "");
-
         }
     }
 }
