@@ -16,7 +16,7 @@ import java.util.function.Consumer;
  * @author Tim Hinkes (timmeey@timmeey.de)
  */
 public class Value<T> extends Observable {
-    private final Consumer<T> setter;
+    private final Consumer<T> valueForwarder;
     private T lastValue;
 
     /**
@@ -38,13 +38,13 @@ public class Value<T> extends Observable {
      * <p>
      * Example: A light that can be switched off by setting this to false.
      *
-     * @param initialValue The initial value
-     * @param setter       The method that updates the actual value on the
-     *                     thing
+     * @param initialValue   The initial value
+     * @param valueForwarder The method that updates the actual value on the
+     *                       thing
      */
-    public Value(final T initialValue, final Consumer<T> setter) {
+    public Value(final T initialValue, final Consumer<T> valueForwarder) {
         this.lastValue = initialValue;
-        this.setter = setter;
+        this.valueForwarder = valueForwarder;
     }
 
     /**
@@ -55,7 +55,7 @@ public class Value<T> extends Observable {
      * @param value Value to set
      */
     public final void set(T value) {
-        setter.accept(value);
+        valueForwarder.accept(value);
         this.notifyOfExternalUpdate(value);
     }
 
