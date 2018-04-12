@@ -610,6 +610,10 @@ public class WebThingServer extends RouterNanoHTTPD {
                 switch (messageType) {
                     case "setProperty":
                         JSONArray propertyNames = messageData.names();
+                        if (propertyNames == null) {
+                            break;
+                        }
+
                         for (int i = 0; i < propertyNames.length(); ++i) {
                             String propertyName = propertyNames.getString(i);
                             try {
@@ -631,6 +635,10 @@ public class WebThingServer extends RouterNanoHTTPD {
                         break;
                     case "requestAction":
                         JSONArray actionNames = messageData.names();
+                        if (actionNames == null) {
+                            break;
+                        }
+
                         for (int i = 0; i < actionNames.length(); ++i) {
                             String actionName = actionNames.getString(i);
                             JSONObject params =
@@ -648,6 +656,10 @@ public class WebThingServer extends RouterNanoHTTPD {
                         break;
                     case "addEventSubscription":
                         JSONArray eventNames = messageData.names();
+                        if (eventNames == null) {
+                            break;
+                        }
+
                         for (int i = 0; i < eventNames.length(); ++i) {
                             String eventName = eventNames.getString(i);
                             this.thing.addEventSubscriber(eventName, this);
@@ -898,6 +910,12 @@ public class WebThingServer extends RouterNanoHTTPD {
             try {
                 JSONObject response = new JSONObject();
                 JSONArray actionNames = json.names();
+                if (actionNames == null) {
+                    return NanoHTTPD.newFixedLengthResponse(Response.Status.BAD_REQUEST,
+                                                            null,
+                                                            null);
+                }
+
                 for (int i = 0; i < actionNames.length(); ++i) {
                     String actionName = actionNames.getString(i);
                     JSONObject params = json.getJSONObject(actionName);
