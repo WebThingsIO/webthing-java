@@ -4,7 +4,7 @@ Implementation of an HTTP [Web Thing](https://iot.mozilla.org/wot/).
 
 # Using
 
-## Gradle
+## Maven
 
 Add the following dependency to your project:
 
