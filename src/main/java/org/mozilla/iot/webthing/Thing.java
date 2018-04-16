@@ -3,6 +3,9 @@
  */
 package org.mozilla.iot.webthing;
 
+import org.everit.json.schema.Schema;
+import org.everit.json.schema.ValidationException;
+import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -399,7 +402,12 @@ public class Thing {
             return null;
         }
 
-        Class cls = this.availableActions.get(actionName).getCls();
+        AvailableAction actionType = this.availableActions.get(actionName);
+        if (!actionType.validateActionInput(input)) {
+            return null;
+        }
+
+        Class cls = actionType.getCls();
         try {
             Constructor constructor =
                     cls.getConstructor(Thing.class, JSONObject.class);
@@ -638,6 +646,7 @@ public class Thing {
     private class AvailableAction {
         private Map<String, Object> metadata;
         private Class cls;
+        private Schema schema;
 
         /**
          * Initialize the object.
@@ -648,6 +657,14 @@ public class Thing {
         public AvailableAction(Map<String, Object> metadata, Class cls) {
             this.metadata = metadata;
             this.cls = cls;
+
+            if (metadata.containsKey("input")) {
+                JSONObject rawSchema =
+                        new JSONObject((Map<String, Object>)metadata.get("input"));
+                this.schema = SchemaLoader.load(rawSchema);
+            } else {
+                this.schema = null;
+            }
         }
 
         /**
@@ -676,6 +693,27 @@ public class Thing {
          */
         public Class getCls() {
             return this.cls;
+        }
+
+        /**
+         * Validate the input for a new action.
+         *
+         * @param actionInput The input to validate
+         * @return Boolean indicating validation success.
+         */
+        public boolean validateActionInput(JSONObject actionInput) {
+            if (this.schema == null) {
+                System.out.println("schema null");
+                return true;
+            }
+
+            try {
+                this.schema.validate(actionInput);
+            } catch (ValidationException e) {
+                return false;
+            }
+
+            return true;
         }
     }
 }
