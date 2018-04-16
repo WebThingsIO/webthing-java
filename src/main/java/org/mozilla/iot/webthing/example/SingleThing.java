@@ -42,6 +42,7 @@ public class SingleThing {
         Map<String, Object> fadeDuration = new HashMap<>();
         fadeMetadata.put("description", "Fade the lamp to a given level");
         fadeInput.put("type", "object");
+        fadeInput.put("required", new String[]{"level", "duration"});
         fadeLevel.put("type", "number");
         fadeLevel.put("minimum", 0);
         fadeLevel.put("maximum", 100);

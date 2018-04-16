@@ -600,7 +600,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                     error.put("messageType", "error");
                     error.put("data", inner);
 
-                    this.sendMessage(inner.toString());
+                    this.sendMessage(error.toString());
 
                     return;
                 }
@@ -629,7 +629,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                                 error.put("messageType", "error");
                                 error.put("data", inner);
 
-                                this.sendMessage(inner.toString());
+                                this.sendMessage(error.toString());
                             }
                         }
                         break;
@@ -650,8 +650,19 @@ public class WebThingServer extends RouterNanoHTTPD {
 
                             Action action =
                                     this.thing.performAction(actionName, input);
+                            if (action != null) {
+                                (new ActionRunner(action)).start();
+                            } else {
+                                JSONObject error = new JSONObject();
+                                JSONObject inner = new JSONObject();
 
-                            (new ActionRunner(action)).start();
+                                inner.put("status", "400 Bad Request");
+                                inner.put("message", "Invalid action request");
+                                error.put("messageType", "error");
+                                error.put("data", inner);
+
+                                this.sendMessage(error.toString());
+                            }
                         }
                         break;
                     case "addEventSubscription":
@@ -675,7 +686,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                         error.put("messageType", "error");
                         error.put("data", inner);
 
-                        this.sendMessage(inner.toString());
+                        this.sendMessage(error.toString());
                         break;
                 }
             }
@@ -925,11 +936,13 @@ public class WebThingServer extends RouterNanoHTTPD {
                     }
 
                     Action action = thing.performAction(actionName, input);
-                    response.put(actionName,
-                                 action.asActionDescription()
-                                       .getJSONObject(actionName));
+                    if (action != null) {
+                        response.put(actionName,
+                                     action.asActionDescription()
+                                           .getJSONObject(actionName));
 
-                    (new ActionRunner(action)).start();
+                        (new ActionRunner(action)).start();
+                    }
                 }
                 return NanoHTTPD.newFixedLengthResponse(Response.Status.CREATED,
                                                         "application/json",

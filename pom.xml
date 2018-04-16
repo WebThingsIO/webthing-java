@@ -6,7 +6,7 @@
 
     <groupId>org.mozilla.iot</groupId>
     <artifactId>webthing</artifactId>
-    <version>0.5.1</version>
+    <version>0.5.2</version>
 
     <name>WebThing</name>
     <description>Implementation of an HTTP Web Thing.</description>
@@ -95,12 +95,24 @@
             <version>3.5.3</version>
         </dependency>
         <dependency>
+            <groupId>com.github.everit-org.json-schema</groupId>
+            <artifactId>org.everit.json.schema</artifactId>
+            <version>1.8.0</version>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.8.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>
