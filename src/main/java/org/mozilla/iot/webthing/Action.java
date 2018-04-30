@@ -51,15 +51,6 @@ public class Action {
     }
 
     /**
-     * Set the prefix of any hrefs associated with this action.
-     *
-     * @param prefix The prefix
-     */
-    public void setHrefPrefix(String prefix) {
-        this.hrefPrefix = prefix;
-    }
-
-    /**
      * Get the action description.
      *
      * @return Description of the action as a JSONObject.
@@ -85,6 +76,15 @@ public class Action {
         } catch (JSONException e) {
             return null;
         }
+    }
+
+    /**
+     * Set the prefix of any hrefs associated with this action.
+     *
+     * @param prefix The prefix
+     */
+    public void setHrefPrefix(String prefix) {
+        this.hrefPrefix = prefix;
     }
 
     /**

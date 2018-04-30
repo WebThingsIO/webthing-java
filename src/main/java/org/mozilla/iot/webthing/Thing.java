@@ -78,51 +78,6 @@ public class Thing {
     }
 
     /**
-     * Set the prefix of any hrefs associated with this thing.
-     *
-     * @param prefix The prefix
-     */
-    public void setHrefPrefix(String prefix) {
-        this.hrefPrefix = prefix;
-
-        this.availableActions.forEach((name, value) -> {
-            value.setHrefPrefix(prefix);
-        });
-
-        this.availableEvents.forEach((name, value) -> {
-            value.setHrefPrefix(prefix);
-        });
-
-        this.properties.forEach((name, value) -> {
-            value.setHrefPrefix(prefix);
-        });
-
-        this.actions.forEach((actionName, list) -> {
-            list.forEach((action) -> {
-                action.setHrefPrefix(prefix);
-            });
-        });
-    }
-
-    /**
-     * Set the href of this thing's websocket.
-     *
-     * @param href The href
-     */
-    public void setWsHref(String href) {
-        this.wsHref = href;
-    }
-
-    /**
-     * Set the href of this thing's custom UI.
-     *
-     * @param href The href
-     */
-    public void setUiHref(String href) {
-        this.uiHref = href;
-    }
-
-    /**
      * Return the thing state as a Thing Description.
      *
      * @return Current thing state.
@@ -189,6 +144,51 @@ public class Thing {
         } catch (JSONException e) {
             return null;
         }
+    }
+
+    /**
+     * Set the prefix of any hrefs associated with this thing.
+     *
+     * @param prefix The prefix
+     */
+    public void setHrefPrefix(String prefix) {
+        this.hrefPrefix = prefix;
+
+        this.availableActions.forEach((name, value) -> {
+            value.setHrefPrefix(prefix);
+        });
+
+        this.availableEvents.forEach((name, value) -> {
+            value.setHrefPrefix(prefix);
+        });
+
+        this.properties.forEach((name, value) -> {
+            value.setHrefPrefix(prefix);
+        });
+
+        this.actions.forEach((actionName, list) -> {
+            list.forEach((action) -> {
+                action.setHrefPrefix(prefix);
+            });
+        });
+    }
+
+    /**
+     * Set the href of this thing's websocket.
+     *
+     * @param href The href
+     */
+    public void setWsHref(String href) {
+        this.wsHref = href;
+    }
+
+    /**
+     * Set the href of this thing's custom UI.
+     *
+     * @param href The href
+     */
+    public void setUiHref(String href) {
+        this.uiHref = href;
     }
 
     /**
@@ -703,7 +703,6 @@ public class Thing {
          */
         public boolean validateActionInput(JSONObject actionInput) {
             if (this.schema == null) {
-                System.out.println("schema null");
                 return true;
             }
 

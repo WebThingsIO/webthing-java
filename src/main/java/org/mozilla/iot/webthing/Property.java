@@ -63,6 +63,17 @@ public class Property<T> {
     }
 
     /**
+     * Get the property description.
+     *
+     * @return Description of the property as an object.
+     */
+    public JSONObject asPropertyDescription() {
+        JSONObject description = new JSONObject(this.metadata);
+        description.put("href", this.hrefPrefix + this.href);
+        return description;
+    }
+
+    /**
      * Set the prefix of any hrefs associated with this property.
      *
      * @param prefix The prefix
@@ -72,14 +83,12 @@ public class Property<T> {
     }
 
     /**
-     * Get the property description.
+     * Get the href of this property.
      *
-     * @return Description of the property as an object.
+     * @return The href.
      */
-    public JSONObject asPropertyDescription() {
-        JSONObject description = new JSONObject(this.metadata);
-        description.put("href", this.hrefPrefix + this.href);
-        return description;
+    public String getHref() {
+        return this.hrefPrefix + this.href;
     }
 
     /**
@@ -116,5 +125,14 @@ public class Property<T> {
      */
     public Thing getThing() {
         return this.thing;
+    }
+
+    /**
+     * Get the metadata associated with this property.
+     *
+     * @return The metadata.
+     */
+    public Map<String, Object> getMetadata() {
+        return this.metadata;
     }
 }
