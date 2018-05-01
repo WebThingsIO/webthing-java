@@ -18,10 +18,10 @@ import java.util.UUID;
 public class MultipleThings {
     public static void main(String[] args) {
         // Create a thing that represents a dimmable light
-        Thing light = new ExampleDimmableLight().getThing();
+        Thing light = new ExampleDimmableLight();
 
         // Create a thing that represents a humidity sensor
-        Thing sensor = new FakeGpioHumiditySensor().getThing();
+        Thing sensor = new FakeGpioHumiditySensor();
 
         try {
             List<Thing> things = new ArrayList<>();
@@ -50,13 +50,9 @@ public class MultipleThings {
     /**
      * A dimmable light that logs received commands to std::out.
      */
-    public static class ExampleDimmableLight {
-        private final Thing thing;
-
+    public static class ExampleDimmableLight extends Thing {
         public ExampleDimmableLight() {
-            this.thing = new Thing("My Lamp",
-                                   "dimmableLight",
-                                   "A web connected lamp");
+            super("My Lamp", "dimmableLight", "A web connected lamp");
 
             Map<String, Object> fadeMetadata = new HashMap<>();
             Map<String, Object> fadeInput = new HashMap<>();
@@ -75,17 +71,17 @@ public class MultipleThings {
             fadeProperties.put("duration", fadeDuration);
             fadeInput.put("properties", fadeProperties);
             fadeMetadata.put("input", fadeInput);
-            thing.addAvailableAction("fade", fadeMetadata, FadeAction.class);
+            this.addAvailableAction("fade", fadeMetadata, FadeAction.class);
 
             Map<String, Object> overheatedMetadata = new HashMap<>();
             overheatedMetadata.put("description",
                                    "The lamp has exceeded its safe operating temperature");
             overheatedMetadata.put("type", "number");
             overheatedMetadata.put("unit", "celsius");
-            thing.addAvailableEvent("overheated", overheatedMetadata);
+            this.addAvailableEvent("overheated", overheatedMetadata);
 
-            thing.addProperty(getOnProperty());
-            thing.addProperty(getLevelProperty());
+            this.addProperty(getOnProperty());
+            this.addProperty(getLevelProperty());
         }
 
         private Property getOnProperty() {
@@ -101,7 +97,7 @@ public class MultipleThings {
                                                     "On-State is now %s\n",
                                                     v));
 
-            return new Property(thing, "on", on, onDescription);
+            return new Property(this, "on", on, onDescription);
         }
 
         private Property getLevelProperty() {
@@ -112,19 +108,15 @@ public class MultipleThings {
             levelDescription.put("minimum", 0);
             levelDescription.put("maximum", 100);
 
-            Value<Double> level = new Value<>(0.0,
-                                              // Here, you could send a signal
-                                              // to the GPIO that controls the
-                                              // brightness
-                                              l -> System.out.printf(
-                                                      "New light level is %s",
-                                                      l));
+            Value<Integer> level = new Value<>(50,
+                                               // Here, you could send a signal
+                                               // to the GPIO that controls the
+                                               // brightness
+                                               l -> System.out.printf(
+                                                       "New light level is %s\n",
+                                                       l));
 
-            return new Property(thing, "level", level, levelDescription);
-        }
-
-        public Thing getThing() {
-            return this.thing;
+            return new Property(this, "level", level, levelDescription);
         }
 
         public static class OverheatedEvent extends Event {
@@ -156,30 +148,29 @@ public class MultipleThings {
     /**
      * A humidity sensor which updates its measurement every few seconds.
      */
-    public static class FakeGpioHumiditySensor {
-        private final Thing thing;
+    public static class FakeGpioHumiditySensor extends Thing {
         private final Value<Double> level;
 
         public FakeGpioHumiditySensor() {
-            this.thing = new Thing("My Humidity Sensor",
-                                   "multiLevelSensor",
-                                   "A web connected humidity sensor");
+            super("My Humidity Sensor",
+                  "multiLevelSensor",
+                  "A web connected humidity sensor");
 
             Map<String, Object> onDescription = new HashMap<>();
             onDescription.put("type", "boolean");
             onDescription.put("description", "Whether the sensor is on");
             Value<Boolean> on = new Value<>(true);
-            thing.addProperty(new Property(thing, "on", on, onDescription));
+            this.addProperty(new Property(this, "on", on, onDescription));
 
             Map<String, Object> levelDescription = new HashMap<>();
             levelDescription.put("type", "number");
             levelDescription.put("description", "The current humidity in %");
             levelDescription.put("unit", "%");
             this.level = new Value<>(0.0);
-            thing.addProperty(new Property(thing,
-                                           "level",
-                                           level,
-                                           levelDescription));
+            this.addProperty(new Property(this,
+                                          "level",
+                                          level,
+                                          levelDescription));
 
             // Start a thread that polls the sensor reading every 3 seconds
             new Thread(() -> {
@@ -201,10 +192,6 @@ public class MultipleThings {
          */
         private double readFromGPIO() {
             return 70.0d * Math.random() * (-0.5 + Math.random());
-        }
-
-        public Thing getThing() {
-            return this.thing;
         }
     }
 }

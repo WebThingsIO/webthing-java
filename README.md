@@ -13,7 +13,7 @@ Add the following dependency to your project:
     <dependency>
         <groupId>org.mozilla.iot</groupId>
         <artifactId>webthing</artifactId>
-        <version>CURRENT_VERSION</version>
+        <version>LATEST</version>
     </dependency>
 </dependencies>
 ```
@@ -25,7 +25,7 @@ Add the following dependency to your project:
 ```
 dependencies {
     runtime(
-        [group: 'org.mozilla.iot', name: 'webthing', version: 'CURRENT_VERSION'],
+        [group: 'org.mozilla.iot', name: 'webthing', version: 'LATEST'],
     )
 }
 ```
@@ -82,7 +82,7 @@ Value<Double> level = new Value<>(0.0,
                                   // to the GPIO that controls the
                                   // brightness
                                   l -> System.out.printf(
-                                          "New light level is %s",
+                                          "New light level is %s\n",
                                           l));
 
 light.addProperty(new Property(light, "level", level, levelDescription));

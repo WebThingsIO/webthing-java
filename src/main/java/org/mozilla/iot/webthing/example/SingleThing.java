@@ -17,7 +17,8 @@ import java.util.UUID;
 
 public class SingleThing {
     public static Thing makeThing() {
-        Thing thing = new Thing("My Lamp", "thing", "A web connected lamp");
+        Thing thing =
+                new Thing("My Lamp", "dimmableLight", "A web connected lamp");
 
         Map<String, Object> onDescription = new HashMap<>();
         onDescription.put("type", "boolean");
