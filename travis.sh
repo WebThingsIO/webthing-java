@@ -12,7 +12,7 @@ java -cp target/webthing-0.5.2-jar-with-dependencies.jar \
     org.mozilla.iot.webthing.example.SingleThing &
 EXAMPLE_PID=$!
 sleep 15
-./webthing-tester/test-client.py --debug
+./webthing-tester/test-client.py
 kill -15 $EXAMPLE_PID
 
 # build and test the multiple-things example
