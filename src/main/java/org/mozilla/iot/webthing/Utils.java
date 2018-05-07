@@ -3,21 +3,42 @@
  */
 package org.mozilla.iot.webthing;
 
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.time.Instant;
+import java.util.Enumeration;
 
 public class Utils {
     /**
      * Get the default local IP address.
      *
-     * @return The IP address, or null if not found.
+     * @return The IP address, or "127.0.0.1" if not found.
      */
     public static String getIP() {
         try {
-            return Inet4Address.getLocalHost().getHostAddress().toString();
-        } catch (UnknownHostException e) {
-            return null;
+            Enumeration interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface iface =
+                        (NetworkInterface)interfaces.nextElement();
+                Enumeration addresses = iface.getInetAddresses();
+
+                while (addresses.hasMoreElements()) {
+                    InetAddress address = (InetAddress)addresses.nextElement();
+                    if (address.isLoopbackAddress() ||
+                            address.isMulticastAddress() ||
+                            address.isLinkLocalAddress() ||
+                            address.getHostAddress().indexOf(":") >= 0) {
+                        continue;
+                    }
+
+                    return address.getHostAddress();
+                }
+            }
+
+            return "127.0.0.1";
+        } catch (SocketException e) {
+            return "127.0.0.1";
         }
     }
 
