@@ -147,6 +147,55 @@ public class Thing {
     }
 
     /**
+     * Get this thing's href.
+     *
+     * @return The href
+     */
+    public String getHref() {
+        if (this.hrefPrefix.length() > 0) {
+            return this.hrefPrefix;
+        }
+
+        return "/";
+    }
+
+    /**
+     * Get this thing's websocket href.
+     *
+     * @return The href.
+     */
+    public String getWsHref() {
+        return wsHref;
+    }
+
+    /**
+     * Set the href of this thing's websocket.
+     *
+     * @param href The href
+     */
+    public void setWsHref(String href) {
+        this.wsHref = href;
+    }
+
+    /**
+     * Get this thing's UI href.
+     *
+     * @return The href.
+     */
+    public String getUiHref() {
+        return uiHref;
+    }
+
+    /**
+     * Set the href of this thing's custom UI.
+     *
+     * @param href The href
+     */
+    public void setUiHref(String href) {
+        this.uiHref = href;
+    }
+
+    /**
      * Set the prefix of any hrefs associated with this thing.
      *
      * @param prefix The prefix
@@ -171,24 +220,6 @@ public class Thing {
                 action.setHrefPrefix(prefix);
             });
         });
-    }
-
-    /**
-     * Set the href of this thing's websocket.
-     *
-     * @param href The href
-     */
-    public void setWsHref(String href) {
-        this.wsHref = href;
-    }
-
-    /**
-     * Set the href of this thing's custom UI.
-     *
-     * @param href The href
-     */
-    public void setUiHref(String href) {
-        this.uiHref = href;
     }
 
     /**
@@ -592,7 +623,7 @@ public class Thing {
         }
 
         /**
-         * Set the prefix of this action's href.
+         * Set the prefix of this event's href.
          *
          * @param prefix The prefix
          */
