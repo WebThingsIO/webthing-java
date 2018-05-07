@@ -56,7 +56,8 @@
                 <role>Developer</role>
             </roles>
             <properties>
-                <picUrl>https://avatars2.githubusercontent.com/u/1174542</picUrl>
+                <picUrl>https://avatars2.githubusercontent.com/u/1174542
+                </picUrl>
             </properties>
         </developer>
     </developers>
@@ -150,6 +151,22 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>
+                                org.mozilla.iot.webthing.example.SingleThing
+                            </mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies
+                        </descriptorRef>
+                    </descriptorRefs>
+                </configuration>
             </plugin>
         </plugins>
     </build>
