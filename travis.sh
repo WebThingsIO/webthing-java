@@ -6,18 +6,17 @@ pip3 install --user -r webthing-tester/requirements.txt
 
 # build the jar
 mvn clean compile assembly:single
+jar=$(find target -type f -name 'webthing-*-jar-with-dependencies.jar')
 
 # build and test the single-thing example
-java -cp target/webthing-0.5.2-jar-with-dependencies.jar \
-    org.mozilla.iot.webthing.example.SingleThing &
+java -cp "${jar}" org.mozilla.iot.webthing.example.SingleThing &
 EXAMPLE_PID=$!
 sleep 15
 ./webthing-tester/test-client.py
 kill -15 $EXAMPLE_PID
 
 # build and test the multiple-things example
-java -cp target/webthing-0.5.2-jar-with-dependencies.jar \
-    org.mozilla.iot.webthing.example.MultipleThings &
+java -cp "${jar}" org.mozilla.iot.webthing.example.MultipleThings &
 EXAMPLE_PID=$!
 sleep 15
 ./webthing-tester/test-client.py --path-prefix "/0"
