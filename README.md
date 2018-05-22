@@ -95,14 +95,9 @@ Now we can add our newly created thing to the server and start it:
 
 ```java
 try {
-    List<Thing> things = new ArrayList<>();
-    things.add(light);
-
-    // If adding more than one thing here, be sure to set the second
-    // parameter to some string, which will be broadcast via mDNS.
+    // If adding more than one thing, use MultipleThings() with a name.
     // In the single thing case, the thing's name will be broadcast.
-    WebThingServer server =
-            new WebThingServer(things, "LightAndTempDevice", 8888);
+    WebThingServer server = new WebThingServer(new SingleThing(light), 8888);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
         public void run() {

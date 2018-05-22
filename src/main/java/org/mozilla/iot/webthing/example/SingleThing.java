@@ -9,9 +9,7 @@ import org.mozilla.iot.webthing.Value;
 import org.mozilla.iot.webthing.WebThingServer;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -70,13 +68,10 @@ public class SingleThing {
         WebThingServer server;
 
         try {
-            List<Thing> things = new ArrayList<>();
-            things.add(thing);
-
-            // If adding more than one thing here, be sure to set the second
-            // parameter to some string, which will be broadcast via mDNS.
+            // If adding more than one thing, use MultipleThings() with a name.
             // In the single thing case, the thing's name will be broadcast.
-            server = new WebThingServer(things, null, 8888);
+            server = new WebThingServer(new WebThingServer.SingleThing(thing),
+                                        8888);
 
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
