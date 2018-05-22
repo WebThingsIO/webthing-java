@@ -28,7 +28,7 @@ import fi.iki.elonen.router.RouterNanoHTTPD;
 public class WebThingServer extends RouterNanoHTTPD {
     private int port;
     private String ip;
-    private List<Thing> things;
+    private ThingsType things;
     private String name;
     private boolean isTls;
     private JmDNS jmdns;
@@ -40,9 +40,9 @@ public class WebThingServer extends RouterNanoHTTPD {
      * @throws IOException
      * @throws NullPointerException
      */
-    public WebThingServer(List<Thing> things, String name)
+    public WebThingServer(ThingsType things)
             throws IOException, NullPointerException {
-        this(things, name, 80, null);
+        this(things, 80, null);
     }
 
     /**
@@ -53,37 +53,30 @@ public class WebThingServer extends RouterNanoHTTPD {
      * @throws IOException
      * @throws NullPointerException
      */
-    public WebThingServer(List<Thing> things, String name, Integer port)
+    public WebThingServer(ThingsType things, Integer port)
             throws IOException, NullPointerException {
-        this(things, name, port, null);
+        this(things, port, null);
     }
 
     /**
      * Initialize the WebThingServer.
      *
      * @param things     List of Things managed by this server
-     * @param name       Name of this device. This should be null if the server
-     *                   is only managing one thing.
      * @param port       Port to listen on
      * @param sslOptions SSL options to pass to the NanoHTTPD server
      * @throws IOException
      * @throws NullPointerException
      */
-    public WebThingServer(List<Thing> things,
-                          String name,
+    public WebThingServer(ThingsType things,
                           Integer port,
                           SSLOptions sslOptions)
             throws IOException, NullPointerException {
         super(port);
         this.port = port;
         this.things = things;
+        this.name = things.getName();
         this.ip = Utils.getIP();
         this.isTls = sslOptions != null;
-
-        if (things.size() > 1 && name == null) {
-            throw new NullPointerException(
-                    "name must be set when managing multiple things");
-        }
 
         if (this.isTls) {
             super.makeSecure(sslOptions.getSocketFactory(),
@@ -92,18 +85,18 @@ public class WebThingServer extends RouterNanoHTTPD {
 
         this.setRoutePrioritizer(new InsertionOrderRoutePrioritizer());
 
-        if (things.size() > 1) {
+        if (MultipleThings.class.isInstance(things)) {
             String wsBase = String.format("%s://%s:%d/",
                                           this.isTls ? "wss" : "ws",
                                           this.ip,
                                           this.port);
-            for (int i = 0; i < things.size(); ++i) {
-                Thing thing = things.get(i);
+
+            List<Thing> list = things.getThings();
+            for (int i = 0; i < list.size(); ++i) {
+                Thing thing = list.get(i);
                 thing.setHrefPrefix(String.format("/%d", i));
                 thing.setWsHref(wsBase + Integer.toString(i));
             }
-
-            this.name = name;
 
             // These are matched in the order they are added.
             addRoute("/:thingId/properties/:propertyName",
@@ -131,10 +124,8 @@ public class WebThingServer extends RouterNanoHTTPD {
                                           this.ip,
                                           this.port);
 
-            Thing thing = things.get(0);
+            Thing thing = things.getThing(0);
             thing.setWsHref(wsHref);
-
-            this.name = thing.getName();
 
             // These are matched in the order they are added.
             addRoute("/properties/:propertyName",
@@ -391,26 +382,17 @@ public class WebThingServer extends RouterNanoHTTPD {
          * @return The thing, or null if not found.
          */
         public Thing getThing(UriResource uriResource, IHTTPSession session) {
-            List<Thing> things = uriResource.initParameter(0, ArrayList.class);
+            ThingsType things = uriResource.initParameter(0, ThingsType.class);
 
-            if (things.size() > 1) {
-                String thingId = this.getUriParam(session.getUri(), 1);
-
-                int id;
-                try {
-                    id = Integer.parseInt(thingId);
-                } catch (NumberFormatException e) {
-                    return null;
-                }
-
-                if (id >= things.size()) {
-                    return null;
-                }
-
-                return things.get(id);
-            } else {
-                return things.get(0);
+            String thingId = this.getUriParam(session.getUri(), 1);
+            int id;
+            try {
+                id = Integer.parseInt(thingId);
+            } catch (NumberFormatException e) {
+                id = 0;
             }
+
+            return things.getThing(id);
         }
     }
 
@@ -430,10 +412,10 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
-            List<Thing> things = uriResource.initParameter(0, ArrayList.class);
+            ThingsType things = uriResource.initParameter(0, ThingsType.class);
 
             JSONArray list = new JSONArray();
-            for (Thing thing : things) {
+            for (Thing thing : things.getThings()) {
                 list.put(thing.asThingDescription());
             }
 
@@ -751,9 +733,9 @@ public class WebThingServer extends RouterNanoHTTPD {
          */
         public String getPropertyName(UriResource uriResource,
                                       IHTTPSession session) {
-            List<Thing> things = uriResource.initParameter(0, ArrayList.class);
+            ThingsType things = uriResource.initParameter(0, ThingsType.class);
 
-            if (things.size() > 1) {
+            if (MultipleThings.class.isInstance(things)) {
                 return this.getUriParam(session.getUri(), 3);
             } else {
                 return this.getUriParam(session.getUri(), 2);
@@ -998,9 +980,9 @@ public class WebThingServer extends RouterNanoHTTPD {
          */
         public String getActionName(UriResource uriResource,
                                     IHTTPSession session) {
-            List<Thing> things = uriResource.initParameter(0, ArrayList.class);
+            ThingsType things = uriResource.initParameter(0, ThingsType.class);
 
-            if (things.size() > 1) {
+            if (MultipleThings.class.isInstance(things)) {
                 return this.getUriParam(session.getUri(), 3);
             } else {
                 return this.getUriParam(session.getUri(), 2);
@@ -1016,9 +998,9 @@ public class WebThingServer extends RouterNanoHTTPD {
          */
         public String getActionId(UriResource uriResource,
                                   IHTTPSession session) {
-            List<Thing> things = uriResource.initParameter(0, ArrayList.class);
+            ThingsType things = uriResource.initParameter(0, ThingsType.class);
 
-            if (things.size() > 1) {
+            if (MultipleThings.class.isInstance(things)) {
                 return this.getUriParam(session.getUri(), 4);
             } else {
                 return this.getUriParam(session.getUri(), 3);
@@ -1176,6 +1158,108 @@ public class WebThingServer extends RouterNanoHTTPD {
             return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                     "application/json",
                                                     "");
+        }
+    }
+
+    interface ThingsType {
+        /**
+         * Get the thing at the given index.
+         */
+        Thing getThing(int idx);
+
+        /**
+         * Get the list of things.
+         */
+        List<Thing> getThings();
+
+        /**
+         * Get the mDNS server name.
+         */
+        String getName();
+    }
+
+    /**
+     * A container for a single thing.
+     */
+    public static class SingleThing implements ThingsType {
+        private Thing thing;
+
+        /**
+         * Initialize the container.
+         *
+         * @param {Object} thing The thing to store
+         */
+        public SingleThing(Thing thing) {
+            this.thing = thing;
+        }
+
+        /**
+         * Get the thing at the given index.
+         */
+        public Thing getThing(int idx) {
+            return this.thing;
+        }
+
+        /**
+         * Get the list of things.
+         */
+        public List<Thing> getThings() {
+            List<Thing> things = new ArrayList<>();
+            things.add(this.thing);
+            return things;
+        }
+
+        /**
+         * Get the mDNS server name.
+         */
+        public String getName() {
+            return this.thing.getName();
+        }
+    }
+
+    /**
+     * A container for multiple things.
+     */
+    public static class MultipleThings implements ThingsType {
+        private List<Thing> things;
+        private String name;
+
+        /**
+         * Initialize the container.
+         *
+         * @param {Object} things The things to store
+         * @param {String} name The mDNS server name
+         */
+        public MultipleThings(List<Thing> things, String name) {
+            this.things = things;
+            this.name = name;
+        }
+
+        /**
+         * Get the thing at the given index.
+         * <p>
+         * idx -- the index
+         */
+        public Thing getThing(int idx) {
+            if (idx < 0 || idx >= this.things.size()) {
+                return null;
+            }
+
+            return this.things.get(idx);
+        }
+
+        /**
+         * Get the list of things.
+         */
+        public List<Thing> getThings() {
+            return this.things;
+        }
+
+        /**
+         * Get the mDNS server name.
+         */
+        public String getName() {
+            return this.name;
         }
     }
 }
