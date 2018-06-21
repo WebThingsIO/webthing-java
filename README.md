@@ -39,24 +39,28 @@ In this example we will set up a dimmable light and a humidity sensor (both usin
 
 ## Dimmable Light
 
-Imagine you have a dimmable Light that you want to expose via the web of things API. The Light can be turned on/off and the brightness can be set from 0% to 100%. Besides the name, description, and type, a `dimmableLight` is required to expose two properties:
+Imagine you have a dimmable light that you want to expose via the web of things API. The light can be turned on/off and the brightness can be set from 0% to 100%. Besides the name, description, and type, a `Light` is required to expose two properties:
 * `on`: the state of the light, whether it is turned on or off
     * Setting this property via a `PUT {"on": true/false}` call to the REST API toggles the light.
-* `level`: the brightness level of the light from 0-100%
+* `brightness`: the brightness level of the light from 0-100%
     * Setting this property via a PUT call to the REST API sets the brightness level of this light.
 
 First we create a new Thing:
 
 ```java
-Thing light = new Thing("My Lamp", "dimmableLight", "A web connected lamp");
+Thing light = new Thing("My Lamp",
+                        Arrays.asList("OnOffSwitch", "Light"),
+                        "A web connected lamp");
 ```
 
 Now we can add the required properties.
 
-The **`on`** property reports and sets the on/off state of the light. For this, we need to have a `Value` Object which holds the actual state and also how to turn the light on/off. For our purposes, we just want to log the new state if the light is switched on/off.
+The **`on`** property reports and sets the on/off state of the light. For this, we need to have a `Value` object which holds the actual state and also a method to turn the light on/off. For our purposes, we just want to log the new state if the light is switched on/off.
 
 ```java
 Map<String, Object> onDescription = new HashMap<>();
+onDescription.put("@type", "OnOffProperty");
+onDescription.put("label", "On/Off");
 onDescription.put("type", "boolean");
 onDescription.put("description", "Whether the lamp is turned on");
 
@@ -71,24 +75,28 @@ Value<Boolean> on = new Value<>(true,
 light.addProperty(new Property(light, "on", on, onDescription));
 ```
 
-The **`level`** property reports the brightness level of the light and sets the level. Like before, instead of actually setting the level of a light, we just log the level to std::out.
+The **`brightness`** property reports the brightness level of the light and sets the level. Like before, instead of actually setting the level of a light, we just log the level.
 
 ```java
-Map<String, Object> levelDescription = new HashMap<>();
-levelDescription.put("type", "number");
-levelDescription.put("description", "The level of light from 0-100");
-levelDescription.put("minimum", 0);
-levelDescription.put("maximum", 100);
+Map<String, Object> brightnessDescription = new HashMap<>();
+brightnessDescription.put("@type", "BrightnessProperty");
+brightnessDescription.put("label", "Brightness");
+brightnessDescription.put("type", "number");
+brightnessDescription.put("description",
+                          "The level of light from 0-100");
+brightnessDescription.put("minimum", 0);
+brightnessDescription.put("maximum", 100);
+brightnessDescription.put("unit", "percent");
 
 Value<Double> level = new Value<>(0.0,
                                   // Here, you could send a signal
                                   // to the GPIO that controls the
                                   // brightness
                                   l -> System.out.printf(
-                                          "New light level is %s\n",
+                                          "Brightness is now %s\n",
                                           l));
 
-light.addProperty(new Property(light, "level", level, levelDescription));
+light.addProperty(new Property(light, "level", level, brightnessDescription));
 ```
 
 Now we can add our newly created thing to the server and start it:
@@ -118,37 +126,29 @@ This will start the server, making the light available via the WoT REST API and 
 
 Let's now also connect a humidity sensor to the server we set up for our light.
 
-A `multiLevelSensor` (a sensor that can also return a level instead of just true/false) has two required properties (besides the name, type, and  optional description): **`on`** and **`level`**. We want to monitor those properties and get notified if the value changes.
+A `MultiLevelSensor` (a sensor that returns a level instead of just on/off) has one required property (besides the name, type, and  optional description): **`level`**. We want to monitor this property and get notified if the value changes.
 
 First we create a new Thing:
 
 ```java
 Thing sensor = new Thing("My Humidity Sensor",
-                         "multiLevelSensor",
+                         Arrays.asList("MultiLevelSensor"),
                          "A web connected humidity sensor");
 ```
 
-Then we create and add the appropriate properties:
-* `on`: tells us whether the sensor is on (i.e. high), or off (i.e. low)
-
-    ```java
-    Map<String, Object> onDescription = new HashMap<>();
-    onDescription.put("type", "boolean");
-    onDescription.put("description", "Whether the sensor is on");
-
-    Value<Boolean> on = new Value<>(true);
-
-    sensor.addProperty(new Property(sensor, "on", on, onDescription));
-    ```
-
+Then we create and add the appropriate property:
 * `level`: tells us what the sensor is actually reading
     * Contrary to the light, the value cannot be set via an API call, as it wouldn't make much sense, to SET what a sensor is reading. Therefore, we are utilizing a *readOnly* Value by omitting the `valueForwarder` parameter.
 
     ```java
     Map<String, Object> levelDescription = new HashMap<>();
+    levelDescription.put("@type", "LevelProperty");
+    levelDescription.put("label", "Humidity");
     levelDescription.put("type", "number");
     levelDescription.put("description", "The current humidity in %");
-    levelDescription.put("unit", "%");
+    levelDescription.put("minimum", 0);
+    levelDescription.put("maximum", 100);
+    levelDescription.put("unit", "percent");
 
     this.level = new Value<>(0.0);
 

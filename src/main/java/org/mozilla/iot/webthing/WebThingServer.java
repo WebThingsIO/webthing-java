@@ -37,7 +37,7 @@ public class WebThingServer extends RouterNanoHTTPD {
      * Initialize the WebThingServer on port 80.
      *
      * @param things List of Things managed by this server
-     * @throws IOException If server fails to bind.
+     * @throws IOException          If server fails to bind.
      * @throws NullPointerException If something bad happened.
      */
     public WebThingServer(ThingsType things)
@@ -50,7 +50,7 @@ public class WebThingServer extends RouterNanoHTTPD {
      *
      * @param things List of Things managed by this server
      * @param port   Port to listen on
-     * @throws IOException If server fails to bind.
+     * @throws IOException          If server fails to bind.
      * @throws NullPointerException If something bad happened.
      */
     public WebThingServer(ThingsType things, Integer port)
@@ -64,7 +64,7 @@ public class WebThingServer extends RouterNanoHTTPD {
      * @param things     List of Things managed by this server
      * @param port       Port to listen on
      * @param sslOptions SSL options to pass to the NanoHTTPD server
-     * @throws IOException If server fails to bind.
+     * @throws IOException          If server fails to bind.
      * @throws NullPointerException If something bad happened.
      */
     public WebThingServer(ThingsType things,
@@ -172,6 +172,29 @@ public class WebThingServer extends RouterNanoHTTPD {
     public void stop() {
         this.jmdns.unregisterAllServices();
         super.stop();
+    }
+
+    interface ThingsType {
+        /**
+         * Get the thing at the given index.
+         *
+         * @return The thing, or null.
+         */
+        Thing getThing(int idx);
+
+        /**
+         * Get the list of things.
+         *
+         * @return The list of things.
+         */
+        List<Thing> getThings();
+
+        /**
+         * Get the mDNS server name.
+         *
+         * @return The server name.
+         */
+        String getName();
     }
 
     /**
@@ -1161,29 +1184,6 @@ public class WebThingServer extends RouterNanoHTTPD {
         }
     }
 
-    interface ThingsType {
-        /**
-         * Get the thing at the given index.
-         *
-         * @return The thing, or null.
-         */
-        Thing getThing(int idx);
-
-        /**
-         * Get the list of things.
-         *
-         * @return The list of things.
-         */
-        List<Thing> getThings();
-
-        /**
-         * Get the mDNS server name.
-         *
-         * @return The server name.
-         */
-        String getName();
-    }
-
     /**
      * A container for a single thing.
      */
@@ -1240,7 +1240,7 @@ public class WebThingServer extends RouterNanoHTTPD {
          * Initialize the container.
          *
          * @param things The things to store
-         * @param name The mDNS server name
+         * @param name   The mDNS server name
          */
         public MultipleThings(List<Thing> things, String name) {
             this.things = things;
