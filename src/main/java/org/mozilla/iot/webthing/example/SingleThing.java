@@ -9,45 +9,56 @@ import org.mozilla.iot.webthing.Value;
 import org.mozilla.iot.webthing.WebThingServer;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 public class SingleThing {
     public static Thing makeThing() {
-        Thing thing =
-                new Thing("My Lamp", "dimmableLight", "A web connected lamp");
+        Thing thing = new Thing("My Lamp",
+                                Arrays.asList("OnOffSwitch", "Light"),
+                                "A web connected lamp");
 
         Map<String, Object> onDescription = new HashMap<>();
+        onDescription.put("@type", "OnOffProperty");
+        onDescription.put("label", "On/Off");
         onDescription.put("type", "boolean");
         onDescription.put("description", "Whether the lamp is turned on");
         // noop for state change
-        thing.addProperty(new Property(thing, "on", new Value(true, on -> {
+        thing.addProperty(new Property(thing, "on", new Value(true, v -> {
         }), onDescription));
 
-        Map<String, Object> levelDescription = new HashMap<>();
-        levelDescription.put("type", "number");
-        levelDescription.put("description", "The level of light from 0-100");
-        levelDescription.put("minimum", 0);
-        levelDescription.put("maximum", 100);
+        Map<String, Object> brightnessDescription = new HashMap<>();
+        brightnessDescription.put("@type", "BrightnessProperty");
+        brightnessDescription.put("label", "Brightness");
+        brightnessDescription.put("type", "number");
+        brightnessDescription.put("description",
+                                  "The level of light from 0-100");
+        brightnessDescription.put("minimum", 0);
+        brightnessDescription.put("maximum", 100);
+        brightnessDescription.put("unit", "percent");
         // noop consumer for level
-        thing.addProperty(new Property(thing, "level", new Value(50, level -> {
-        }), levelDescription));
+        thing.addProperty(new Property(thing, "brightness", new Value(50, v -> {
+        }), brightnessDescription));
 
         Map<String, Object> fadeMetadata = new HashMap<>();
         Map<String, Object> fadeInput = new HashMap<>();
         Map<String, Object> fadeProperties = new HashMap<>();
-        Map<String, Object> fadeLevel = new HashMap<>();
+        Map<String, Object> fadeBrightness = new HashMap<>();
         Map<String, Object> fadeDuration = new HashMap<>();
+        fadeMetadata.put("label", "Fade");
         fadeMetadata.put("description", "Fade the lamp to a given level");
         fadeInput.put("type", "object");
-        fadeInput.put("required", new String[]{"level", "duration"});
-        fadeLevel.put("type", "number");
-        fadeLevel.put("minimum", 0);
-        fadeLevel.put("maximum", 100);
+        fadeInput.put("required", new String[]{"brightness", "duration"});
+        fadeBrightness.put("type", "number");
+        fadeBrightness.put("minimum", 0);
+        fadeBrightness.put("maximum", 100);
+        fadeBrightness.put("unit", "percent");
         fadeDuration.put("type", "number");
+        fadeDuration.put("minimum", 1);
         fadeDuration.put("unit", "milliseconds");
-        fadeProperties.put("level", fadeLevel);
+        fadeProperties.put("brightness", fadeBrightness);
         fadeProperties.put("duration", fadeDuration);
         fadeInput.put("properties", fadeProperties);
         fadeMetadata.put("input", fadeInput);
@@ -106,7 +117,7 @@ public class SingleThing {
             } catch (InterruptedException e) {
             }
 
-            thing.setProperty("level", input.getInt("level"));
+            thing.setProperty("brightness", input.getInt("brightness"));
             thing.addEvent(new OverheatedEvent(thing, 102));
         }
     }

@@ -10,6 +10,7 @@ import org.mozilla.iot.webthing.WebThingServer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,40 +54,13 @@ public class MultipleThings {
      */
     public static class ExampleDimmableLight extends Thing {
         public ExampleDimmableLight() {
-            super("My Lamp", "dimmableLight", "A web connected lamp");
+            super("My Lamp",
+                  Arrays.asList("OnOffSwitch", "Light"),
+                  "A web connected lamp");
 
-            Map<String, Object> fadeMetadata = new HashMap<>();
-            Map<String, Object> fadeInput = new HashMap<>();
-            Map<String, Object> fadeProperties = new HashMap<>();
-            Map<String, Object> fadeLevel = new HashMap<>();
-            Map<String, Object> fadeDuration = new HashMap<>();
-            fadeMetadata.put("description", "Fade the lamp to a given level");
-            fadeInput.put("type", "object");
-            fadeInput.put("required", new String[]{"level", "duration"});
-            fadeLevel.put("type", "number");
-            fadeLevel.put("minimum", 0);
-            fadeLevel.put("maximum", 100);
-            fadeDuration.put("type", "number");
-            fadeDuration.put("unit", "milliseconds");
-            fadeProperties.put("level", fadeLevel);
-            fadeProperties.put("duration", fadeDuration);
-            fadeInput.put("properties", fadeProperties);
-            fadeMetadata.put("input", fadeInput);
-            this.addAvailableAction("fade", fadeMetadata, FadeAction.class);
-
-            Map<String, Object> overheatedMetadata = new HashMap<>();
-            overheatedMetadata.put("description",
-                                   "The lamp has exceeded its safe operating temperature");
-            overheatedMetadata.put("type", "number");
-            overheatedMetadata.put("unit", "celsius");
-            this.addAvailableEvent("overheated", overheatedMetadata);
-
-            this.addProperty(getOnProperty());
-            this.addProperty(getLevelProperty());
-        }
-
-        private Property getOnProperty() {
             Map<String, Object> onDescription = new HashMap<>();
+            onDescription.put("@type", "OnOffProperty");
+            onDescription.put("label", "On/Off");
             onDescription.put("type", "boolean");
             onDescription.put("description", "Whether the lamp is turned on");
 
@@ -98,26 +72,59 @@ public class MultipleThings {
                                                     "On-State is now %s\n",
                                                     v));
 
-            return new Property(this, "on", on, onDescription);
-        }
+            this.addProperty(new Property(this, "on", on, onDescription));
 
-        private Property getLevelProperty() {
-            Map<String, Object> levelDescription = new HashMap<>();
-            levelDescription.put("type", "number");
-            levelDescription.put("description",
-                                 "The level of light from 0-100");
-            levelDescription.put("minimum", 0);
-            levelDescription.put("maximum", 100);
+            Map<String, Object> brightnessDescription = new HashMap<>();
+            brightnessDescription.put("@type", "BrightnessProperty");
+            brightnessDescription.put("label", "Brightness");
+            brightnessDescription.put("type", "number");
+            brightnessDescription.put("description",
+                                      "The level of light from 0-100");
+            brightnessDescription.put("minimum", 0);
+            brightnessDescription.put("maximum", 100);
+            brightnessDescription.put("unit", "percent");
 
-            Value<Integer> level = new Value<>(50,
-                                               // Here, you could send a signal
-                                               // to the GPIO that controls the
-                                               // brightness
-                                               l -> System.out.printf(
-                                                       "New light level is %s\n",
-                                                       l));
+            Value<Integer> brightness = new Value<>(50,
+                                                    // Here, you could send a signal
+                                                    // to the GPIO that controls the
+                                                    // brightness
+                                                    l -> System.out.printf(
+                                                            "Brightness is now %s\n",
+                                                            l));
 
-            return new Property(this, "level", level, levelDescription);
+            this.addProperty(new Property(this,
+                                          "brightness",
+                                          brightness,
+                                          brightnessDescription));
+
+            Map<String, Object> fadeMetadata = new HashMap<>();
+            Map<String, Object> fadeInput = new HashMap<>();
+            Map<String, Object> fadeProperties = new HashMap<>();
+            Map<String, Object> fadeBrightness = new HashMap<>();
+            Map<String, Object> fadeDuration = new HashMap<>();
+            fadeMetadata.put("label", "Fade");
+            fadeMetadata.put("description", "Fade the lamp to a given level");
+            fadeInput.put("type", "object");
+            fadeInput.put("required", new String[]{"brightness", "duration"});
+            fadeBrightness.put("type", "number");
+            fadeBrightness.put("minimum", 0);
+            fadeBrightness.put("maximum", 100);
+            fadeBrightness.put("unit", "percent");
+            fadeDuration.put("type", "number");
+            fadeDuration.put("minimum", 1);
+            fadeDuration.put("unit", "milliseconds");
+            fadeProperties.put("brightness", fadeBrightness);
+            fadeProperties.put("duration", fadeDuration);
+            fadeInput.put("properties", fadeProperties);
+            fadeMetadata.put("input", fadeInput);
+            this.addAvailableAction("fade", fadeMetadata, FadeAction.class);
+
+            Map<String, Object> overheatedMetadata = new HashMap<>();
+            overheatedMetadata.put("description",
+                                   "The lamp has exceeded its safe operating temperature");
+            overheatedMetadata.put("type", "number");
+            overheatedMetadata.put("unit", "celsius");
+            this.addAvailableEvent("overheated", overheatedMetadata);
         }
 
         public static class OverheatedEvent extends Event {
@@ -140,7 +147,7 @@ public class MultipleThings {
                 } catch (InterruptedException e) {
                 }
 
-                thing.setProperty("level", input.getInt("level"));
+                thing.setProperty("brightness", input.getInt("brightness"));
                 thing.addEvent(new OverheatedEvent(thing, 102));
             }
         }
@@ -154,19 +161,17 @@ public class MultipleThings {
 
         public FakeGpioHumiditySensor() {
             super("My Humidity Sensor",
-                  "multiLevelSensor",
+                  Arrays.asList("MultiLevelSensor"),
                   "A web connected humidity sensor");
 
-            Map<String, Object> onDescription = new HashMap<>();
-            onDescription.put("type", "boolean");
-            onDescription.put("description", "Whether the sensor is on");
-            Value<Boolean> on = new Value<>(true);
-            this.addProperty(new Property(this, "on", on, onDescription));
-
             Map<String, Object> levelDescription = new HashMap<>();
+            levelDescription.put("@type", "LevelProperty");
+            levelDescription.put("label", "Humidity");
             levelDescription.put("type", "number");
             levelDescription.put("description", "The current humidity in %");
-            levelDescription.put("unit", "%");
+            levelDescription.put("minimum", 0);
+            levelDescription.put("maximum", 100);
+            levelDescription.put("unit", "percent");
             this.level = new Value<>(0.0);
             this.addProperty(new Property(this,
                                           "level",
@@ -180,7 +185,10 @@ public class MultipleThings {
                         Thread.sleep(3000);
                         // Update the underlying value, which in turn notifies
                         // all listeners
-                        this.level.notifyOfExternalUpdate(readFromGPIO());
+                        double newLevel = this.readFromGPIO();
+                        System.out.printf("setting new humidity level: %f\n",
+                                          newLevel);
+                        this.level.notifyOfExternalUpdate(newLevel);
                     } catch (InterruptedException e) {
                         throw new IllegalStateException(e);
                     }
@@ -192,7 +200,7 @@ public class MultipleThings {
          * Mimic an actual sensor updating its reading every couple seconds.
          */
         private double readFromGPIO() {
-            return 70.0d * Math.random() * (-0.5 + Math.random());
+            return Math.abs(70.0d * Math.random() * (-0.5 + Math.random()));
         }
     }
 }

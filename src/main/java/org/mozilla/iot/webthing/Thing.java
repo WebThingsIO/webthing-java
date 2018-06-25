@@ -23,7 +23,8 @@ import java.util.Set;
  * A Web Thing.
  */
 public class Thing {
-    private String type;
+    private String context;
+    private List<String> type;
     private String name;
     private String description;
     private Map<String, Property> properties;
@@ -42,16 +43,16 @@ public class Thing {
      * @param name The thing's name
      */
     public Thing(String name) {
-        this(name, "thing", "");
+        this(name, new ArrayList<>(), "");
     }
 
     /**
      * Initialize the object.
      *
      * @param name The thing's name
-     * @param type The thing's type
+     * @param type The thing's type(s)
      */
-    public Thing(String name, String type) {
+    public Thing(String name, List<String> type) {
         this(name, type, "");
     }
 
@@ -59,11 +60,12 @@ public class Thing {
      * Initialize the object.
      *
      * @param name        The thing's name
-     * @param type        The thing's type
+     * @param type        The thing's type(s)
      * @param description Description of the thing
      */
-    public Thing(String name, String type, String description) {
+    public Thing(String name, List<String> type, String description) {
         this.name = name;
+        this.context = "https://iot.mozilla.org/schemas";
         this.type = type;
         this.description = description;
         this.properties = new HashMap<>();
@@ -99,7 +101,8 @@ public class Thing {
             obj.put("name", this.getName());
             obj.put("href",
                     this.hrefPrefix.length() > 0 ? this.hrefPrefix : "/");
-            obj.put("type", this.getType());
+            obj.put("@context", this.getContext());
+            obj.put("@type", this.getType());
             obj.put("properties", this.getPropertyDescriptions());
             obj.put("actions", actions);
             obj.put("events", events);
@@ -232,11 +235,20 @@ public class Thing {
     }
 
     /**
-     * Get the type of the thing.
+     * Get the type context of the thing.
      *
-     * @return The type.
+     * @return The context.
      */
-    public String getType() {
+    public String getContext() {
+        return this.context;
+    }
+
+    /**
+     * Get the type(s) of the thing.
+     *
+     * @return The type(s).
+     */
+    public List<String> getType() {
         return this.type;
     }
 
