@@ -282,28 +282,48 @@ public class Thing {
     /**
      * Get the thing's actions as a JSONArray.
      *
+     * @param actionName Optional action name to get descriptions for
      * @return Action descriptions.
      */
-    public JSONArray getActionDescriptions() {
+    public JSONArray getActionDescriptions(String actionName) {
         JSONArray array = new JSONArray();
-        this.actions.forEach((actionName, list) -> {
-            list.forEach((action) -> {
+
+        if (actionName == null) {
+            this.actions.forEach((name, list) -> {
+                list.forEach((action) -> {
+                    array.put(action.asActionDescription());
+                });
+            });
+        } else if (this.actions.containsKey(actionName)) {
+            this.actions.get(actionName).forEach((action) -> {
                 array.put(action.asActionDescription());
             });
-        });
+        }
+
         return array;
     }
 
     /**
      * Get the thing's events as a JSONArray.
      *
+     * @param eventName Optional event name to get descriptions for
      * @return Event descriptions.
      */
-    public JSONArray getEventDescriptions() {
+    public JSONArray getEventDescriptions(String eventName) {
         JSONArray array = new JSONArray();
-        this.events.forEach((event) -> {
-            array.put(event.asEventDescription());
-        });
+
+        if (eventName == null) {
+            this.events.forEach((event) -> {
+                array.put(event.asEventDescription());
+            });
+        } else {
+            this.events.forEach((event) -> {
+                if (event.getName().equals(eventName)) {
+                    array.put(event.asEventDescription());
+                }
+            });
+        }
+
         return array;
     }
 
@@ -356,6 +376,19 @@ public class Thing {
         }
 
         return null;
+    }
+
+    /**
+     * Get a mapping of all properties and their values.
+     *
+     * @returns JSON object of propertyName -> value.
+     */
+    public JSONObject getProperties() {
+        JSONObject properties = new JSONObject();
+        this.properties.forEach((name, property) -> {
+            properties.put(name, property.getValue());
+        });
+        return properties;
     }
 
     /**
