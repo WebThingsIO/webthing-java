@@ -151,7 +151,7 @@ public class WebThingServer extends RouterNanoHTTPD {
      */
     public void start(boolean daemon) throws IOException {
         this.jmdns = JmDNS.create(InetAddress.getLocalHost());
-        
+
         ServiceInfo serviceInfo = ServiceInfo.create("_webthing._tcp.local",
                                                      this.name,
                                                      null,
@@ -277,6 +277,21 @@ public class WebThingServer extends RouterNanoHTTPD {
      */
     public static class BaseHandler implements UriResponder {
         /**
+         * Add necessary CORS headers to response.
+         *
+         * @param response Response to add headers to
+         * @return The Response object.
+         */
+        public Response corsResponse(Response response) {
+            response.addHeader("Access-Control-Allow-Origin", "*");
+            response.addHeader("Access-Control-Allow-Headers",
+                               "Origin, X-Requested-With, Content-Type, Accept");
+            response.addHeader("Access-Control-Allow-Methods",
+                               "GET, HEAD, PUT, POST, DELETE");
+            return response;
+        }
+
+        /**
          * Handle a GET request.
          *
          * @param uriResource The URI resource that was matched
@@ -287,9 +302,9 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response get(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
-                                                    null,
-                                                    null);
+            return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
+                                                                 null,
+                                                                 null));
         }
 
         /**
@@ -303,9 +318,9 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response put(UriResource uriResource,
                             Map<String, String> urlParams,
                             IHTTPSession session) {
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
-                                                    null,
-                                                    null);
+            return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
+                                                                 null,
+                                                                 null));
         }
 
         /**
@@ -319,9 +334,9 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response post(UriResource uriResource,
                              Map<String, String> urlParams,
                              IHTTPSession session) {
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
-                                                    null,
-                                                    null);
+            return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
+                                                                 null,
+                                                                 null));
         }
 
         /**
@@ -335,9 +350,9 @@ public class WebThingServer extends RouterNanoHTTPD {
         public Response delete(UriResource uriResource,
                                Map<String, String> urlParams,
                                IHTTPSession session) {
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
-                                                    null,
-                                                    null);
+            return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
+                                                                 null,
+                                                                 null));
         }
 
         /**
@@ -353,9 +368,9 @@ public class WebThingServer extends RouterNanoHTTPD {
                               UriResource uriResource,
                               Map<String, String> urlParams,
                               IHTTPSession session) {
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
-                                                    null,
-                                                    null);
+            return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
+                                                                 null,
+                                                                 null));
         }
 
         /**
@@ -438,9 +453,9 @@ public class WebThingServer extends RouterNanoHTTPD {
                 list.put(thing.asThingDescription());
             }
 
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
-                                                    "application/json",
-                                                    list.toString());
+            return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
+                                                                 "application/json",
+                                                                 list.toString()));
         }
     }
 
@@ -462,25 +477,26 @@ public class WebThingServer extends RouterNanoHTTPD {
                             IHTTPSession session) {
             Thing thing = this.getThing(uriResource, session);
             if (thing == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
             Map<String, String> headers = session.getHeaders();
             if (isWebSocketRequested(session)) {
                 if (!NanoWSD.HEADER_WEBSOCKET_VERSION_VALUE.equalsIgnoreCase(
                         headers.get(NanoWSD.HEADER_WEBSOCKET_VERSION))) {
-                    return newFixedLengthResponse(Response.Status.BAD_REQUEST,
-                                                  NanoHTTPD.MIME_PLAINTEXT,
-                                                  "Invalid Websocket-Version " +
-                                                          headers.get(NanoWSD.HEADER_WEBSOCKET_VERSION));
+                    return corsResponse(newFixedLengthResponse(Response.Status.BAD_REQUEST,
+                                                               NanoHTTPD.MIME_PLAINTEXT,
+                                                               "Invalid Websocket-Version " +
+                                                                       headers.get(
+                                                                               NanoWSD.HEADER_WEBSOCKET_VERSION)));
                 }
 
                 if (!headers.containsKey(NanoWSD.HEADER_WEBSOCKET_KEY)) {
-                    return newFixedLengthResponse(Response.Status.BAD_REQUEST,
-                                                  NanoHTTPD.MIME_PLAINTEXT,
-                                                  "Missing Websocket-Key");
+                    return corsResponse(newFixedLengthResponse(Response.Status.BAD_REQUEST,
+                                                               NanoHTTPD.MIME_PLAINTEXT,
+                                                               "Missing Websocket-Key"));
                 }
 
                 NanoWSD.WebSocket webSocket =
@@ -491,9 +507,9 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                 NanoWSD.makeAcceptKey(headers.get(
                                                         NanoWSD.HEADER_WEBSOCKET_KEY)));
                 } catch (NoSuchAlgorithmException e) {
-                    return newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
-                                                  NanoHTTPD.MIME_PLAINTEXT,
-                                                  "The SHA-1 Algorithm required for websockets is not available on the server.");
+                    return corsResponse(newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
+                                                               NanoHTTPD.MIME_PLAINTEXT,
+                                                               "The SHA-1 Algorithm required for websockets is not available on the server."));
                 }
 
                 if (headers.containsKey(NanoWSD.HEADER_WEBSOCKET_PROTOCOL)) {
@@ -505,10 +521,10 @@ public class WebThingServer extends RouterNanoHTTPD {
                 return handshakeResponse;
             }
 
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
-                                                    "application/json",
-                                                    thing.asThingDescription()
-                                                         .toString());
+            return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
+                                                                 "application/json",
+                                                                 thing.asThingDescription()
+                                                                      .toString()));
         }
 
         /**
@@ -727,15 +743,15 @@ public class WebThingServer extends RouterNanoHTTPD {
                             IHTTPSession session) {
             Thing thing = this.getThing(uriResource, session);
             if (thing == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
             // TODO: this is not yet defined in the spec
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
-                                                    "application/json",
-                                                    "");
+            return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
+                                                                 "application/json",
+                                                                 ""));
         }
     }
 
@@ -775,16 +791,16 @@ public class WebThingServer extends RouterNanoHTTPD {
                             IHTTPSession session) {
             Thing thing = this.getThing(uriResource, session);
             if (thing == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
             String propertyName = this.getPropertyName(uriResource, session);
             if (!thing.hasProperty(propertyName)) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
             JSONObject obj = new JSONObject();
@@ -795,13 +811,13 @@ public class WebThingServer extends RouterNanoHTTPD {
                 } else {
                     obj.putOpt(propertyName, value);
                 }
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
-                                                        "application/json",
-                                                        obj.toString());
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
+                                                                     "application/json",
+                                                                     obj.toString()));
             } catch (JSONException e) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
+                                                                     null,
+                                                                     null));
             }
         }
 
@@ -819,29 +835,29 @@ public class WebThingServer extends RouterNanoHTTPD {
                             IHTTPSession session) {
             Thing thing = this.getThing(uriResource, session);
             if (thing == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
             String propertyName = this.getPropertyName(uriResource, session);
             if (!thing.hasProperty(propertyName)) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
             JSONObject json = this.parseBody(session);
             if (json == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.BAD_REQUEST,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.BAD_REQUEST,
+                                                                     null,
+                                                                     null));
             }
 
             if (!json.has(propertyName)) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.BAD_REQUEST,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.BAD_REQUEST,
+                                                                     null,
+                                                                     null));
             }
 
             try {
@@ -849,17 +865,17 @@ public class WebThingServer extends RouterNanoHTTPD {
 
                 JSONObject obj = new JSONObject();
                 obj.putOpt(propertyName, thing.getProperty(propertyName));
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
-                                                        "application/json",
-                                                        obj.toString());
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
+                                                                     "application/json",
+                                                                     obj.toString()));
             } catch (JSONException e) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
+                                                                     null,
+                                                                     null));
             } catch (IllegalArgumentException e) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.FORBIDDEN,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.FORBIDDEN,
+                                                                     null,
+                                                                     null));
             }
         }
     }
@@ -882,15 +898,15 @@ public class WebThingServer extends RouterNanoHTTPD {
                             IHTTPSession session) {
             Thing thing = this.getThing(uriResource, session);
             if (thing == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
-                                                    "application/json",
-                                                    thing.getActionDescriptions()
-                                                         .toString());
+            return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
+                                                                 "application/json",
+                                                                 thing.getActionDescriptions()
+                                                                      .toString()));
         }
 
         /**
@@ -907,25 +923,26 @@ public class WebThingServer extends RouterNanoHTTPD {
                              IHTTPSession session) {
             Thing thing = this.getThing(uriResource, session);
             if (thing == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
             JSONObject json = this.parseBody(session);
             if (json == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.BAD_REQUEST,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.BAD_REQUEST,
+                                                                     null,
+                                                                     null));
             }
 
             try {
                 JSONObject response = new JSONObject();
                 JSONArray actionNames = json.names();
                 if (actionNames == null) {
-                    return NanoHTTPD.newFixedLengthResponse(Response.Status.BAD_REQUEST,
-                                                            null,
-                                                            null);
+                    return corsResponse(NanoHTTPD.newFixedLengthResponse(
+                            Response.Status.BAD_REQUEST,
+                            null,
+                            null));
                 }
 
                 for (int i = 0; i < actionNames.length(); ++i) {
@@ -945,13 +962,13 @@ public class WebThingServer extends RouterNanoHTTPD {
                         (new ActionRunner(action)).start();
                     }
                 }
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.CREATED,
-                                                        "application/json",
-                                                        response.toString());
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.CREATED,
+                                                                     "application/json",
+                                                                     response.toString()));
             } catch (JSONException e) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
+                                                                     null,
+                                                                     null));
             }
         }
     }
@@ -974,15 +991,15 @@ public class WebThingServer extends RouterNanoHTTPD {
                             IHTTPSession session) {
             Thing thing = this.getThing(uriResource, session);
             if (thing == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
             // TODO: this is not yet defined in the spec
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
-                                                    "application/json",
-                                                    "");
+            return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
+                                                                 "application/json",
+                                                                 ""));
         }
     }
 
@@ -1040,9 +1057,9 @@ public class WebThingServer extends RouterNanoHTTPD {
                             IHTTPSession session) {
             Thing thing = this.getThing(uriResource, session);
             if (thing == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
             String actionName = this.getActionName(uriResource, session);
@@ -1050,15 +1067,15 @@ public class WebThingServer extends RouterNanoHTTPD {
 
             Action action = thing.getAction(actionName, actionId);
             if (action == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
-                                                    "application/json",
-                                                    action.asActionDescription()
-                                                          .toString());
+            return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
+                                                                 "application/json",
+                                                                 action.asActionDescription()
+                                                                       .toString()));
         }
 
         /**
@@ -1075,15 +1092,15 @@ public class WebThingServer extends RouterNanoHTTPD {
                             IHTTPSession session) {
             Thing thing = this.getThing(uriResource, session);
             if (thing == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
             // TODO: this is not yet defined in the spec
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
-                                                    "application/json",
-                                                    "");
+            return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
+                                                                 "application/json",
+                                                                 ""));
         }
 
         /**
@@ -1100,22 +1117,22 @@ public class WebThingServer extends RouterNanoHTTPD {
                                IHTTPSession session) {
             Thing thing = this.getThing(uriResource, session);
             if (thing == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
             String actionName = this.getActionName(uriResource, session);
             String actionId = this.getActionId(uriResource, session);
 
             if (thing.removeAction(actionName, actionId)) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NO_CONTENT,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NO_CONTENT,
+                                                                     null,
+                                                                     null));
             } else {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
         }
     }
@@ -1138,15 +1155,15 @@ public class WebThingServer extends RouterNanoHTTPD {
                             IHTTPSession session) {
             Thing thing = this.getThing(uriResource, session);
             if (thing == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
-                                                    "application/json",
-                                                    thing.getEventDescriptions()
-                                                         .toString());
+            return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
+                                                                 "application/json",
+                                                                 thing.getEventDescriptions()
+                                                                      .toString()));
         }
     }
 
@@ -1168,15 +1185,15 @@ public class WebThingServer extends RouterNanoHTTPD {
                             IHTTPSession session) {
             Thing thing = this.getThing(uriResource, session);
             if (thing == null) {
-                return NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
-                                                        null,
-                                                        null);
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
             }
 
             // TODO: this is not yet defined in the spec
-            return NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
-                                                    "application/json",
-                                                    "");
+            return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
+                                                                 "application/json",
+                                                                 ""));
         }
     }
 
