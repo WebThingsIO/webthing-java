@@ -151,16 +151,12 @@ public class WebThingServer extends RouterNanoHTTPD {
      */
     public void start(boolean daemon) throws IOException {
         this.jmdns = JmDNS.create(InetAddress.getLocalHost());
-
-        String url = String.format("url=%s://%s:%d/",
-                                   this.isTls ? "https" : "http",
-                                   this.ip,
-                                   this.port);
-        ServiceInfo serviceInfo = ServiceInfo.create("_http._tcp.local",
+        
+        ServiceInfo serviceInfo = ServiceInfo.create("_webthing._tcp.local",
                                                      this.name,
-                                                     "_webthing",
+                                                     null,
                                                      this.port,
-                                                     url);
+                                                     "path=/");
         this.jmdns.registerService(serviceInfo);
 
         super.start(NanoHTTPD.SOCKET_READ_TIMEOUT, daemon);
