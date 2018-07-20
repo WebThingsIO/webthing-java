@@ -236,6 +236,7 @@ public class WebThingServer extends RouterNanoHTTPD {
         /**
          * Get the thing at the given index.
          *
+         * @param idx Index of thing.
          * @return The thing, or null.
          */
         Thing getThing(int idx);
@@ -496,6 +497,7 @@ public class WebThingServer extends RouterNanoHTTPD {
          *
          * @param uriResource The URI resource that was matched
          * @param session     The HTTP session
+         * @return Boolean indicating validation success.
          */
         public boolean validateHost(UriResource uriResource,
                                     IHTTPSession session) {

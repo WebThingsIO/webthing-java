@@ -381,7 +381,7 @@ public class Thing {
     /**
      * Get a mapping of all properties and their values.
      *
-     * @returns JSON object of propertyName -> value.
+     * @return JSON object of propertyName -&gt; value.
      */
     public JSONObject getProperties() {
         JSONObject properties = new JSONObject();
