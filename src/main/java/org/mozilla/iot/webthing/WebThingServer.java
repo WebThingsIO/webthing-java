@@ -846,10 +846,10 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                                      null));
             }
 
-            // TODO: this is not yet defined in the spec
             return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                                  "application/json",
-                                                                 ""));
+                                                                 thing.getProperties()
+                                                                      .toString()));
         }
     }
 
@@ -1021,7 +1021,8 @@ public class WebThingServer extends RouterNanoHTTPD {
 
             return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                                  "application/json",
-                                                                 thing.getActionDescriptions()
+                                                                 thing.getActionDescriptions(
+                                                                         null)
                                                                       .toString()));
         }
 
@@ -1100,6 +1101,24 @@ public class WebThingServer extends RouterNanoHTTPD {
      */
     public static class ActionHandler extends BaseHandler {
         /**
+         * Get the action name from the URI.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param session     The HTTP session
+         * @return The property name.
+         */
+        public String getActionName(UriResource uriResource,
+                                    IHTTPSession session) {
+            ThingsType things = uriResource.initParameter(0, ThingsType.class);
+
+            if (MultipleThings.class.isInstance(things)) {
+                return this.getUriParam(session.getUri(), 3);
+            } else {
+                return this.getUriParam(session.getUri(), 2);
+            }
+        }
+
+        /**
          * Handle a GET request.
          *
          * @param uriResource The URI resource that was matched
@@ -1124,10 +1143,88 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                                      null));
             }
 
-            // TODO: this is not yet defined in the spec
             return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                                  "application/json",
-                                                                 ""));
+                                                                 thing.getActionDescriptions(
+                                                                         this.getActionName(
+                                                                                 uriResource,
+                                                                                 session))
+                                                                      .toString()));
+        }
+
+        /**
+         * Handle a POST request.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param urlParams   Map of URL parameters
+         * @param session     The HTTP session
+         * @return The appropriate response.
+         */
+        @Override
+        public Response post(UriResource uriResource,
+                             Map<String, String> urlParams,
+                             IHTTPSession session) {
+            if (!validateHost(uriResource, session)) {
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.FORBIDDEN,
+                                                        null,
+                                                        null);
+            }
+
+            Thing thing = this.getThing(uriResource, session);
+            if (thing == null) {
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NOT_FOUND,
+                                                                     null,
+                                                                     null));
+            }
+
+            JSONObject json = this.parseBody(session);
+            if (json == null) {
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.BAD_REQUEST,
+                                                                     null,
+                                                                     null));
+            }
+
+            String actionName = this.getActionName(uriResource, session);
+
+            try {
+                JSONObject response = new JSONObject();
+                JSONArray actionNames = json.names();
+                if (actionNames == null) {
+                    return corsResponse(NanoHTTPD.newFixedLengthResponse(
+                            Response.Status.BAD_REQUEST,
+                            null,
+                            null));
+                }
+
+                for (int i = 0; i < actionNames.length(); ++i) {
+                    String name = actionNames.getString(i);
+                    if (!name.equals(actionName)) {
+                        continue;
+                    }
+
+                    JSONObject params = json.getJSONObject(name);
+                    JSONObject input = null;
+                    if (params.has("input")) {
+                        input = params.getJSONObject("input");
+                    }
+
+                    Action action = thing.performAction(name, input);
+                    if (action != null) {
+                        response.put(name,
+                                     action.asActionDescription()
+                                           .getJSONObject(name));
+
+                        (new ActionRunner(action)).start();
+                    }
+                }
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.CREATED,
+                                                                     "application/json",
+                                                                     response.toString()));
+            } catch (JSONException e) {
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
+                                                                     null,
+                                                                     null));
+            }
         }
     }
 
@@ -1314,7 +1411,8 @@ public class WebThingServer extends RouterNanoHTTPD {
 
             return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                                  "application/json",
-                                                                 thing.getEventDescriptions()
+                                                                 thing.getEventDescriptions(
+                                                                         null)
                                                                       .toString()));
         }
     }
@@ -1323,6 +1421,24 @@ public class WebThingServer extends RouterNanoHTTPD {
      * Handle a request to /events/&lt;event_name&gt;.
      */
     public static class EventHandler extends BaseHandler {
+        /**
+         * Get the event name from the URI.
+         *
+         * @param uriResource The URI resource that was matched
+         * @param session     The HTTP session
+         * @return The property name.
+         */
+        public String getEventName(UriResource uriResource,
+                                   IHTTPSession session) {
+            ThingsType things = uriResource.initParameter(0, ThingsType.class);
+
+            if (MultipleThings.class.isInstance(things)) {
+                return this.getUriParam(session.getUri(), 3);
+            } else {
+                return this.getUriParam(session.getUri(), 2);
+            }
+        }
+
         /**
          * Handle a GET request.
          *
@@ -1348,10 +1464,13 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                                      null));
             }
 
-            // TODO: this is not yet defined in the spec
             return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                                  "application/json",
-                                                                 ""));
+                                                                 thing.getEventDescriptions(
+                                                                         this.getEventName(
+                                                                                 uriResource,
+                                                                                 session))
+                                                                      .toString()));
         }
     }
 
