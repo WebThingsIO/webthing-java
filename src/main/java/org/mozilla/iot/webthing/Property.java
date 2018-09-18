@@ -4,6 +4,7 @@
 package org.mozilla.iot.webthing;
 
 import org.json.JSONObject;
+import org.mozilla.iot.webthing.errors.PropertyError;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,6 +63,11 @@ public class Property<T> {
         this.value.addObserver((a, b) -> this.thing.propertyNotify(this));
     }
 
+    private boolean readOnly() {
+        return this.metadata.containsKey("readOnly") &&
+                (boolean)this.metadata.get("readOnly");
+    }
+
     /**
      * Get the property description.
      *
@@ -104,8 +110,13 @@ public class Property<T> {
      * Set the current value of the property.
      *
      * @param value The value to set
+     * @throws PropertyError If value could not be set.
      */
-    public void setValue(T value) {
+    public void setValue(T value) throws PropertyError {
+        if (this.readOnly()) {
+            throw new PropertyError("Read-only property");
+        }
+
         this.value.set(value);
     }
 

@@ -7,6 +7,7 @@ import org.mozilla.iot.webthing.Property;
 import org.mozilla.iot.webthing.Thing;
 import org.mozilla.iot.webthing.Value;
 import org.mozilla.iot.webthing.WebThingServer;
+import org.mozilla.iot.webthing.errors.PropertyError;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -26,8 +27,10 @@ public class SingleThing {
         onDescription.put("type", "boolean");
         onDescription.put("description", "Whether the lamp is turned on");
         // noop for state change
-        thing.addProperty(new Property(thing, "on", new Value(true, v -> {
-        }), onDescription));
+        thing.addProperty(new Property(thing,
+                                       "on",
+                                       new Value(true),
+                                       onDescription));
 
         Map<String, Object> brightnessDescription = new HashMap<>();
         brightnessDescription.put("@type", "BrightnessProperty");
@@ -39,8 +42,10 @@ public class SingleThing {
         brightnessDescription.put("maximum", 100);
         brightnessDescription.put("unit", "percent");
         // noop consumer for level
-        thing.addProperty(new Property(thing, "brightness", new Value(50, v -> {
-        }), brightnessDescription));
+        thing.addProperty(new Property(thing,
+                                       "brightness",
+                                       new Value(50),
+                                       brightnessDescription));
 
         Map<String, Object> fadeMetadata = new HashMap<>();
         Map<String, Object> fadeInput = new HashMap<>();
@@ -117,8 +122,11 @@ public class SingleThing {
             } catch (InterruptedException e) {
             }
 
-            thing.setProperty("brightness", input.getInt("brightness"));
-            thing.addEvent(new OverheatedEvent(thing, 102));
+            try {
+                thing.setProperty("brightness", input.getInt("brightness"));
+                thing.addEvent(new OverheatedEvent(thing, 102));
+            } catch (PropertyError e) {
+            }
         }
     }
 }

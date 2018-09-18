@@ -127,7 +127,7 @@ This will start the server, making the light available via the WoT REST API and 
 
 Let's now also connect a humidity sensor to the server we set up for our light.
 
-A `MultiLevelSensor` (a sensor that returns a level instead of just on/off) has one required property (besides the name, type, and  optional description): **`level`**. We want to monitor this property and get notified if the value changes.
+A `MultiLevelSensor` (a sensor that returns a level instead of just on/off) has one required property (besides the name, type, and optional description): **`level`**. We want to monitor this property and get notified if the value changes.
 
 First we create a new Thing:
 
@@ -139,7 +139,7 @@ Thing sensor = new Thing("My Humidity Sensor",
 
 Then we create and add the appropriate property:
 * `level`: tells us what the sensor is actually reading
-    * Contrary to the light, the value cannot be set via an API call, as it wouldn't make much sense, to SET what a sensor is reading. Therefore, we are utilizing a *readOnly* Value by omitting the `valueForwarder` parameter.
+    * Contrary to the light, the value cannot be set via an API call, as it wouldn't make much sense, to SET what a sensor is reading. Therefore, we are creating a *readOnly* property.
 
     ```java
     Map<String, Object> levelDescription = new HashMap<>();
@@ -150,6 +150,7 @@ Then we create and add the appropriate property:
     levelDescription.put("minimum", 0);
     levelDescription.put("maximum", 100);
     levelDescription.put("unit", "percent");
+    levelDescription.put("readOnly", true);
 
     this.level = new Value<>(0.0);
 

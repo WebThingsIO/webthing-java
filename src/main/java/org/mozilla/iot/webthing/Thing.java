@@ -9,6 +9,7 @@ import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.iot.webthing.errors.PropertyError;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -407,8 +408,10 @@ public class Thing {
      * @param propertyName Name of the property to set
      * @param value        Value to set
      * @param <T>          Type of the property value
+     * @throws PropertyError If value could not be set.
      */
-    public <T> void setProperty(String propertyName, T value) {
+    public <T> void setProperty(String propertyName, T value)
+            throws PropertyError {
         Property<T> prop = this.findProperty(propertyName);
         if (prop == null) {
             return;

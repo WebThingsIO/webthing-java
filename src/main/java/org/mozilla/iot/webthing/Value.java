@@ -28,9 +28,7 @@ public class Value<T> extends Observable {
      * @param initialValue The initial value
      */
     public Value(final T initialValue) {
-        this(initialValue, v -> {
-            throw new IllegalArgumentException("Read-only value");
-        });
+        this(initialValue, null);
     }
 
     /**
@@ -55,7 +53,10 @@ public class Value<T> extends Observable {
      * @param value Value to set
      */
     public final void set(T value) {
-        valueForwarder.accept(value);
+        if (valueForwarder != null) {
+            valueForwarder.accept(value);
+        }
+
         this.notifyOfExternalUpdate(value);
     }
 

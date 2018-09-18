@@ -6,6 +6,7 @@ package org.mozilla.iot.webthing;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.iot.webthing.errors.PropertyError;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -731,7 +732,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                                 this.thing.setProperty(propertyName,
                                                        messageData.get(
                                                                propertyName));
-                            } catch (IllegalArgumentException e) {
+                            } catch (PropertyError e) {
                                 JSONObject error = new JSONObject();
                                 JSONObject inner = new JSONObject();
 
@@ -740,7 +741,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                                 error.put("messageType", "error");
                                 error.put("data", inner);
 
-                                this.sendMessage(error.toString());
+                                this.sendMessage(e.getMessage());
                             }
                         }
                         break;
@@ -984,7 +985,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                 return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
                                                                      null,
                                                                      null));
-            } catch (IllegalArgumentException e) {
+            } catch (PropertyError e) {
                 return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.FORBIDDEN,
                                                                      null,
                                                                      null));
