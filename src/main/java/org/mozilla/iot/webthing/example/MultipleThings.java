@@ -7,6 +7,7 @@ import org.mozilla.iot.webthing.Property;
 import org.mozilla.iot.webthing.Thing;
 import org.mozilla.iot.webthing.Value;
 import org.mozilla.iot.webthing.WebThingServer;
+import org.mozilla.iot.webthing.errors.PropertyError;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -147,8 +148,11 @@ public class MultipleThings {
                 } catch (InterruptedException e) {
                 }
 
-                thing.setProperty("brightness", input.getInt("brightness"));
-                thing.addEvent(new OverheatedEvent(thing, 102));
+                try {
+                    thing.setProperty("brightness", input.getInt("brightness"));
+                    thing.addEvent(new OverheatedEvent(thing, 102));
+                } catch (PropertyError e) {
+                }
             }
         }
     }
@@ -172,6 +176,7 @@ public class MultipleThings {
             levelDescription.put("minimum", 0);
             levelDescription.put("maximum", 100);
             levelDescription.put("unit", "percent");
+            levelDescription.put("readOnly", true);
             this.level = new Value<>(0.0);
             this.addProperty(new Property(this,
                                           "level",

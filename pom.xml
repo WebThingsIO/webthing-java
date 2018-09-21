@@ -6,7 +6,7 @@
 
     <groupId>org.mozilla.iot</groupId>
     <artifactId>webthing</artifactId>
-    <version>0.7.0</version>
+    <version>0.8.0</version>
 
     <name>WebThing</name>
     <description>Implementation of an HTTP Web Thing.</description>
