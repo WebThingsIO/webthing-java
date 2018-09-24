@@ -736,8 +736,8 @@ public class WebThingServer extends RouterNanoHTTPD {
                                 JSONObject error = new JSONObject();
                                 JSONObject inner = new JSONObject();
 
-                                inner.put("status", "403 Forbidden");
-                                inner.put("message", "Read-only property");
+                                inner.put("status", "400 Bad Request");
+                                inner.put("message", e.getMessage());
                                 error.put("messageType", "error");
                                 error.put("data", inner);
 
@@ -986,7 +986,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                                      null,
                                                                      null));
             } catch (PropertyError e) {
-                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.FORBIDDEN,
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.BAD_REQUEST,
                                                                      null,
                                                                      null));
             }
