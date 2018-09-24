@@ -3,10 +3,12 @@
  */
 package org.mozilla.iot.webthing;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mozilla.iot.webthing.errors.PropertyError;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -63,9 +65,122 @@ public class Property<T> {
         this.value.addObserver((a, b) -> this.thing.propertyNotify(this));
     }
 
-    private boolean readOnly() {
-        return this.metadata.containsKey("readOnly") &&
-                (boolean)this.metadata.get("readOnly");
+    /**
+     * Validate new property value before setting it.
+     *
+     * @param value New value
+     * @throws PropertyError On validation error.
+     */
+    private void validateValue(T value) throws PropertyError {
+        if (this.metadata.containsKey("type")) {
+            switch ((String)this.metadata.get("type")) {
+                case "null":
+                    if (!JSONObject.NULL.equals(value)) {
+                        throw new PropertyError("Value must be null");
+                    }
+                    break;
+                case "boolean":
+                    if (!(Boolean.FALSE.equals(value) ||
+                                  Boolean.TRUE.equals(value) ||
+                                  (value instanceof String &&
+                                           (((String)value).equalsIgnoreCase(
+                                                   "true") ||
+                                                    ((String)value).equalsIgnoreCase(
+                                                            "false"))))) {
+                        throw new PropertyError("Value must be a boolean");
+                    }
+                    break;
+                case "object":
+                    if (!(value instanceof JSONObject)) {
+                        throw new PropertyError("Value must be an object");
+                    }
+                    break;
+                case "array":
+                    if (!(value instanceof JSONArray)) {
+                        throw new PropertyError("Value must be an array");
+                    }
+                    break;
+                case "number":
+                    if (!(value instanceof Number)) {
+                        throw new PropertyError("Value must be a number");
+                    }
+                    break;
+                case "integer":
+                    if (!(value instanceof Number)) {
+                        throw new PropertyError("Value must be an integer");
+                    }
+
+                    double v = ((Number)value).doubleValue();
+                    if (Math.abs(v - Math.round(v)) <= 0.000001) {
+                        throw new PropertyError("Value must be an integer");
+                    }
+                    break;
+                case "string":
+                    if (!(value instanceof String)) {
+                        throw new PropertyError("Value must be a string");
+                    }
+                    break;
+            }
+        }
+
+        if (this.metadata.containsKey("readOnly") &&
+                (boolean)this.metadata.get("readOnly")) {
+            throw new PropertyError("Read-only property");
+        }
+
+        if (this.metadata.containsKey("minimum")) {
+            double minimum =
+                    ((Number)this.metadata.get("minimum")).doubleValue();
+            double v = ((Number)value).doubleValue();
+
+            if (v < minimum) {
+                throw new PropertyError(String.format(
+                        "Value less than minimum: %f",
+                        minimum));
+            }
+        }
+
+        if (this.metadata.containsKey("maximum")) {
+            double maximum =
+                    ((Number)this.metadata.get("maximum")).doubleValue();
+            double v = ((Number)value).doubleValue();
+
+            if (v > maximum) {
+                throw new PropertyError(String.format(
+                        "Value greater than maximum: %f",
+                        maximum));
+            }
+        }
+
+        if (this.metadata.containsKey("enum") &&
+                this.metadata.containsKey("type")) {
+            switch ((String)this.metadata.get("type")) {
+                case "number": {
+                    double v = ((Number)value).doubleValue();
+                    List e = (List<Double>)this.metadata.get("enum");
+                    if (e.size() > 0 && !e.contains(v)) {
+                        throw new PropertyError("Invalid enum value");
+                    }
+                    break;
+                }
+                case "integer": {
+                    int v = ((Number)value).intValue();
+                    List e = (List<Integer>)this.metadata.get("enum");
+                    if (e.size() > 0 && !e.contains(v)) {
+                        throw new PropertyError("Invalid enum value");
+                    }
+                    break;
+                }
+                case "string": {
+                    String v = (String)value;
+                    List e = (List<String>)this.metadata.get("enum");
+                    if (e.size() > 0 && !e.contains(v)) {
+                        throw new PropertyError("Invalid enum value");
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -113,10 +228,7 @@ public class Property<T> {
      * @throws PropertyError If value could not be set.
      */
     public void setValue(T value) throws PropertyError {
-        if (this.readOnly()) {
-            throw new PropertyError("Read-only property");
-        }
-
+        this.validateValue(value);
         this.value.set(value);
     }
 

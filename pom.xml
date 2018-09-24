@@ -6,7 +6,7 @@
 
     <groupId>org.mozilla.iot</groupId>
     <artifactId>webthing</artifactId>
-    <version>0.8.0</version>
+    <version>0.8.1</version>
 
     <name>WebThing</name>
     <description>Implementation of an HTTP Web Thing.</description>
@@ -73,7 +73,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20180130</version>
+            <version>20180813</version>
         </dependency>
         <dependency>
             <groupId>org.nanohttpd</groupId>
@@ -93,17 +93,17 @@
         <dependency>
             <groupId>org.jmdns</groupId>
             <artifactId>jmdns</artifactId>
-            <version>3.5.3</version>
+            <version>3.5.4</version>
         </dependency>
         <dependency>
             <groupId>com.github.everit-org.json-schema</groupId>
             <artifactId>org.everit.json.schema</artifactId>
-            <version>1.8.0</version>
+            <version>1.9.1</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.8.2</version>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
