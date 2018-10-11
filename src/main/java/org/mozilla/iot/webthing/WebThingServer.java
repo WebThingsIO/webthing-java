@@ -107,6 +107,7 @@ public class WebThingServer extends RouterNanoHTTPD {
         this.hosts.add(String.format("%s:%d", this.ip, this.port));
 
         if (this.hostname != null) {
+            this.hostname = this.hostname.toLowerCase();
             this.hosts.add(this.hostname);
             this.hosts.add(String.format("%s:%d", this.hostname, this.port));
         }
@@ -505,7 +506,7 @@ public class WebThingServer extends RouterNanoHTTPD {
             List<String> hosts = uriResource.initParameter(1, List.class);
 
             String host = session.getHeaders().get("host");
-            if (host != null && hosts.contains(host)) {
+            if (host != null && hosts.contains(host.toLowerCase())) {
                 return true;
             }
 
