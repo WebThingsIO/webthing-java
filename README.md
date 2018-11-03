@@ -26,11 +26,32 @@ Add the following dependency to your project:
 
 Add the following dependency to your project:
 
-```
+```gradle
 dependencies {
     runtime(
         [group: 'org.mozilla.iot', name: 'webthing', version: 'LATEST'],
     )
+}
+```
+
+## Android Studio
+
+- Open File → Project Structure
+- Select the module you want to add this as a dependency to
+- Go to the "Dependencies" tab
+- Click green "+" button
+- Select "Library dependency"
+- Enter `org.mozilla.iot:webthing` in the search bar and search
+- Select the package in the result and confirm with "OK"
+- Click "OK" in the Project Structure dialog
+- Add `maven { url 'https://www.jitpack.io' }` to the repositories in the project gradle config (should be in the sidebar under "Gradle Scripts", the one annotated with "(Project: Your project name)". If you have the default configuration, the section will look as follows:
+```gradle
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        maven { url 'https://www.jitpack.io' }
+    }
 }
 ```
 
