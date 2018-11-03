@@ -44,7 +44,7 @@ dependencies {
 - Enter `org.mozilla.iot:webthing` in the search bar and search
 - Select the package in the result and confirm with "OK"
 - Click "OK" in the Project Structure dialog
-- Add `maven { url 'https://www.jitpack.io' }` to the repositories in the project gradle config (should be in the sidebar under "Gradle Scripts", the one annotated with "(Project: Your project name)". If oyu have the default configuration, the section will look as follows:
+- Add `maven { url 'https://www.jitpack.io' }` to the repositories in the project gradle config (should be in the sidebar under "Gradle Scripts", the one annotated with "(Project: Your project name)". If you have the default configuration, the section will look as follows:
 ```gradle
 allprojects {
     repositories {
