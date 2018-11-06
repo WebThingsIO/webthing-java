@@ -50,7 +50,7 @@ First we create a new Thing:
 
 ```java
 Thing light = new Thing("My Lamp",
-                        Arrays.asList("OnOffSwitch", "Light"),
+                        new JSONArray(Arrays.asList("OnOffSwitch", "Light")),
                         "A web connected lamp");
 ```
 
@@ -59,7 +59,7 @@ Now we can add the required properties.
 The **`on`** property reports and sets the on/off state of the light. For this, we need to have a `Value` object which holds the actual state and also a method to turn the light on/off. For our purposes, we just want to log the new state if the light is switched on/off.
 
 ```java
-Map<String, Object> onDescription = new HashMap<>();
+JSONObject onDescription = new JSONObject();
 onDescription.put("@type", "OnOffProperty");
 onDescription.put("label", "On/Off");
 onDescription.put("type", "boolean");
@@ -79,7 +79,7 @@ light.addProperty(new Property(light, "on", on, onDescription));
 The **`brightness`** property reports the brightness level of the light and sets the level. Like before, instead of actually setting the level of a light, we just log the level.
 
 ```java
-Map<String, Object> brightnessDescription = new HashMap<>();
+JSONObject brightnessDescription = new JSONObject();
 brightnessDescription.put("@type", "BrightnessProperty");
 brightnessDescription.put("label", "Brightness");
 brightnessDescription.put("type", "number");
@@ -133,7 +133,7 @@ First we create a new Thing:
 
 ```java
 Thing sensor = new Thing("My Humidity Sensor",
-                         Arrays.asList("MultiLevelSensor"),
+                         new JSONArray(Arrays.asList("MultiLevelSensor")),
                          "A web connected humidity sensor");
 ```
 
@@ -142,7 +142,7 @@ Then we create and add the appropriate property:
     * Contrary to the light, the value cannot be set via an API call, as it wouldn't make much sense, to SET what a sensor is reading. Therefore, we are creating a *readOnly* property.
 
     ```java
-    Map<String, Object> levelDescription = new HashMap<>();
+    JSONObject levelDescription = new JSONObject();
     levelDescription.put("@type", "LevelProperty");
     levelDescription.put("label", "Humidity");
     levelDescription.put("type", "number");

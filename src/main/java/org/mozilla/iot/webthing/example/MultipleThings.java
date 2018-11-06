@@ -1,5 +1,6 @@
 package org.mozilla.iot.webthing.example;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mozilla.iot.webthing.Action;
 import org.mozilla.iot.webthing.Event;
@@ -12,9 +13,7 @@ import org.mozilla.iot.webthing.errors.PropertyError;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public class MultipleThings {
@@ -56,10 +55,10 @@ public class MultipleThings {
     public static class ExampleDimmableLight extends Thing {
         public ExampleDimmableLight() {
             super("My Lamp",
-                  Arrays.asList("OnOffSwitch", "Light"),
+                  new JSONArray(Arrays.asList("OnOffSwitch", "Light")),
                   "A web connected lamp");
 
-            Map<String, Object> onDescription = new HashMap<>();
+            JSONObject onDescription = new JSONObject();
             onDescription.put("@type", "OnOffProperty");
             onDescription.put("label", "On/Off");
             onDescription.put("type", "boolean");
@@ -75,7 +74,7 @@ public class MultipleThings {
 
             this.addProperty(new Property(this, "on", on, onDescription));
 
-            Map<String, Object> brightnessDescription = new HashMap<>();
+            JSONObject brightnessDescription = new JSONObject();
             brightnessDescription.put("@type", "BrightnessProperty");
             brightnessDescription.put("label", "Brightness");
             brightnessDescription.put("type", "number");
@@ -98,15 +97,17 @@ public class MultipleThings {
                                           brightness,
                                           brightnessDescription));
 
-            Map<String, Object> fadeMetadata = new HashMap<>();
-            Map<String, Object> fadeInput = new HashMap<>();
-            Map<String, Object> fadeProperties = new HashMap<>();
-            Map<String, Object> fadeBrightness = new HashMap<>();
-            Map<String, Object> fadeDuration = new HashMap<>();
+            JSONObject fadeMetadata = new JSONObject();
+            JSONObject fadeInput = new JSONObject();
+            JSONObject fadeProperties = new JSONObject();
+            JSONObject fadeBrightness = new JSONObject();
+            JSONObject fadeDuration = new JSONObject();
             fadeMetadata.put("label", "Fade");
             fadeMetadata.put("description", "Fade the lamp to a given level");
             fadeInput.put("type", "object");
-            fadeInput.put("required", new String[]{"brightness", "duration"});
+            fadeInput.put("required",
+                          new JSONArray(Arrays.asList("brightness",
+                                                      "duration")));
             fadeBrightness.put("type", "number");
             fadeBrightness.put("minimum", 0);
             fadeBrightness.put("maximum", 100);
@@ -120,7 +121,7 @@ public class MultipleThings {
             fadeMetadata.put("input", fadeInput);
             this.addAvailableAction("fade", fadeMetadata, FadeAction.class);
 
-            Map<String, Object> overheatedMetadata = new HashMap<>();
+            JSONObject overheatedMetadata = new JSONObject();
             overheatedMetadata.put("description",
                                    "The lamp has exceeded its safe operating temperature");
             overheatedMetadata.put("type", "number");
@@ -165,10 +166,10 @@ public class MultipleThings {
 
         public FakeGpioHumiditySensor() {
             super("My Humidity Sensor",
-                  Arrays.asList("MultiLevelSensor"),
+                  new JSONArray(Arrays.asList("MultiLevelSensor")),
                   "A web connected humidity sensor");
 
-            Map<String, Object> levelDescription = new HashMap<>();
+            JSONObject levelDescription = new JSONObject();
             levelDescription.put("@type", "LevelProperty");
             levelDescription.put("label", "Humidity");
             levelDescription.put("type", "number");

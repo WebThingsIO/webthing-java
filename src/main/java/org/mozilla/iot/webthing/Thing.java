@@ -25,7 +25,7 @@ import java.util.Set;
  */
 public class Thing {
     private String context;
-    private List<String> type;
+    private JSONArray type;
     private String name;
     private String description;
     private Map<String, Property> properties;
@@ -44,7 +44,7 @@ public class Thing {
      * @param name The thing's name
      */
     public Thing(String name) {
-        this(name, new ArrayList<>(), "");
+        this(name, new JSONArray(), "");
     }
 
     /**
@@ -53,7 +53,7 @@ public class Thing {
      * @param name The thing's name
      * @param type The thing's type(s)
      */
-    public Thing(String name, List<String> type) {
+    public Thing(String name, JSONArray type) {
         this(name, type, "");
     }
 
@@ -64,7 +64,7 @@ public class Thing {
      * @param type        The thing's type(s)
      * @param description Description of the thing
      */
-    public Thing(String name, List<String> type, String description) {
+    public Thing(String name, JSONArray type, String description) {
         this.name = name;
         this.context = "https://iot.mozilla.org/schemas";
         this.type = type;
@@ -249,7 +249,7 @@ public class Thing {
      *
      * @return The type(s).
      */
-    public List<String> getType() {
+    public JSONArray getType() {
         return this.type;
     }
 
@@ -457,11 +457,12 @@ public class Thing {
      * Add an available event.
      *
      * @param name     Name of the event
-     * @param metadata Event metadata, i.e. type, description, etc., as a Map
+     * @param metadata Event metadata, i.e. type, description, etc., as a
+     *                 JSONObject
      */
-    public void addAvailableEvent(String name, Map<String, Object> metadata) {
+    public void addAvailableEvent(String name, JSONObject metadata) {
         if (metadata == null) {
-            metadata = new HashMap<>();
+            metadata = new JSONObject();
         }
 
         metadata.put("href", String.format("/events/%s", name));
@@ -524,14 +525,15 @@ public class Thing {
      * Add an available action.
      *
      * @param name     Name of the action
-     * @param metadata Action metadata, i.e. type, description, etc., as a Map
+     * @param metadata Action metadata, i.e. type, description, etc., as a
+     *                 JSONObject
      * @param cls      Class to instantiate for this action
      */
     public void addAvailableAction(String name,
-                                   Map<String, Object> metadata,
+                                   JSONObject metadata,
                                    Class cls) {
         if (metadata == null) {
-            metadata = new HashMap<>();
+            metadata = new JSONObject();
         }
 
         metadata.put("href", String.format("/actions/%s", name));
@@ -657,7 +659,7 @@ public class Thing {
      * Class to describe an event available for subscription.
      */
     private class AvailableEvent {
-        private Map<String, Object> metadata;
+        private JSONObject metadata;
         private Set<WebThingServer.ThingHandler.ThingWebSocket> subscribers;
 
         /**
@@ -665,7 +667,7 @@ public class Thing {
          *
          * @param metadata The event metadata
          */
-        public AvailableEvent(Map<String, Object> metadata) {
+        public AvailableEvent(JSONObject metadata) {
             this.metadata = metadata;
             this.subscribers = new HashSet<>();
         }
@@ -676,7 +678,7 @@ public class Thing {
          * @param prefix The prefix
          */
         public void setHrefPrefix(String prefix) {
-            String href = (String)this.metadata.get("href");
+            String href = this.metadata.getString("href");
             this.metadata.put("href", prefix + href);
         }
 
@@ -685,7 +687,7 @@ public class Thing {
          *
          * @return The metadata.
          */
-        public Map<String, Object> getMetadata() {
+        public JSONObject getMetadata() {
             return this.metadata;
         }
 
@@ -723,7 +725,7 @@ public class Thing {
      * Class to describe an action available to be taken.
      */
     private class AvailableAction {
-        private Map<String, Object> metadata;
+        private JSONObject metadata;
         private Class cls;
         private Schema schema;
 
@@ -733,13 +735,12 @@ public class Thing {
          * @param metadata The action metadata
          * @param cls      Class to instantiate for the action
          */
-        public AvailableAction(Map<String, Object> metadata, Class cls) {
+        public AvailableAction(JSONObject metadata, Class cls) {
             this.metadata = metadata;
             this.cls = cls;
 
-            if (metadata.containsKey("input")) {
-                JSONObject rawSchema =
-                        new JSONObject((Map<String, Object>)metadata.get("input"));
+            if (metadata.has("input")) {
+                JSONObject rawSchema = metadata.getJSONObject("input");
                 this.schema = SchemaLoader.load(rawSchema);
             } else {
                 this.schema = null;
@@ -752,7 +753,7 @@ public class Thing {
          * @param prefix The prefix
          */
         public void setHrefPrefix(String prefix) {
-            String href = (String)this.metadata.get("href");
+            String href = this.metadata.getString("href");
             this.metadata.put("href", prefix + href);
         }
 
@@ -761,7 +762,7 @@ public class Thing {
          *
          * @return The metadata.
          */
-        public Map<String, Object> getMetadata() {
+        public JSONObject getMetadata() {
             return this.metadata;
         }
 
