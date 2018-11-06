@@ -41,7 +41,7 @@ public class SingleThing {
         brightnessDescription.put("minimum", 0);
         brightnessDescription.put("maximum", 100);
         brightnessDescription.put("unit", "percent");
-        // noop consumer for level
+        // noop consumer for brightness
         thing.addProperty(new Property(thing,
                                        "brightness",
                                        new Value(50),
