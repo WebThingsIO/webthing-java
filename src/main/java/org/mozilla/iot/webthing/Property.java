@@ -3,13 +3,13 @@
  */
 package org.mozilla.iot.webthing;
 
+import com.google.common.collect.Lists;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mozilla.iot.webthing.errors.PropertyError;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A Property represents an individual state value of a thing.
@@ -21,7 +21,7 @@ public class Property<T> {
     private String name;
     private String hrefPrefix;
     private String href;
-    private Map<String, Object> metadata;
+    private JSONObject metadata;
     private Value<T> value;
 
     /**
@@ -47,7 +47,7 @@ public class Property<T> {
     public Property(Thing thing,
                     String name,
                     Value<T> value,
-                    Map<String, Object> metadata) {
+                    JSONObject metadata) {
         this.thing = thing;
         this.name = name;
         this.value = value;
@@ -55,7 +55,7 @@ public class Property<T> {
         this.href = String.format("/properties/%s", this.name);
 
         if (metadata == null) {
-            this.metadata = new HashMap<>();
+            this.metadata = new JSONObject();
         } else {
             this.metadata = metadata;
         }
@@ -72,8 +72,8 @@ public class Property<T> {
      * @throws PropertyError On validation error.
      */
     private void validateValue(T value) throws PropertyError {
-        if (this.metadata.containsKey("type")) {
-            switch ((String)this.metadata.get("type")) {
+        if (this.metadata.has("type")) {
+            switch (this.metadata.getString("type")) {
                 case "null":
                     if (!JSONObject.NULL.equals(value)) {
                         throw new PropertyError("Value must be null");
@@ -123,14 +123,13 @@ public class Property<T> {
             }
         }
 
-        if (this.metadata.containsKey("readOnly") &&
-                (boolean)this.metadata.get("readOnly")) {
+        if (this.metadata.has("readOnly") &&
+                this.metadata.getBoolean("readOnly")) {
             throw new PropertyError("Read-only property");
         }
 
-        if (this.metadata.containsKey("minimum")) {
-            double minimum =
-                    ((Number)this.metadata.get("minimum")).doubleValue();
+        if (this.metadata.has("minimum")) {
+            double minimum = this.metadata.getDouble("minimum");
             double v = ((Number)value).doubleValue();
 
             if (v < minimum) {
@@ -140,9 +139,8 @@ public class Property<T> {
             }
         }
 
-        if (this.metadata.containsKey("maximum")) {
-            double maximum =
-                    ((Number)this.metadata.get("maximum")).doubleValue();
+        if (this.metadata.has("maximum")) {
+            double maximum = this.metadata.getDouble("maximum");
             double v = ((Number)value).doubleValue();
 
             if (v > maximum) {
@@ -152,12 +150,12 @@ public class Property<T> {
             }
         }
 
-        if (this.metadata.containsKey("enum") &&
-                this.metadata.containsKey("type")) {
-            switch ((String)this.metadata.get("type")) {
+        if (this.metadata.has("enum") && this.metadata.has("type")) {
+            List e = this.metadata.getJSONArray("enum").toList();
+
+            switch (this.metadata.getString("type")) {
                 case "number": {
                     double v = ((Number)value).doubleValue();
-                    List e = (List<Double>)this.metadata.get("enum");
                     if (e.size() > 0 && !e.contains(v)) {
                         throw new PropertyError("Invalid enum value");
                     }
@@ -165,7 +163,6 @@ public class Property<T> {
                 }
                 case "integer": {
                     int v = ((Number)value).intValue();
-                    List e = (List<Integer>)this.metadata.get("enum");
                     if (e.size() > 0 && !e.contains(v)) {
                         throw new PropertyError("Invalid enum value");
                     }
@@ -173,7 +170,6 @@ public class Property<T> {
                 }
                 case "string": {
                     String v = (String)value;
-                    List e = (List<String>)this.metadata.get("enum");
                     if (e.size() > 0 && !e.contains(v)) {
                         throw new PropertyError("Invalid enum value");
                     }
@@ -189,7 +185,9 @@ public class Property<T> {
      * @return Description of the property as an object.
      */
     public JSONObject asPropertyDescription() {
-        JSONObject description = new JSONObject(this.metadata);
+        List<String> keyList = Lists.newArrayList(this.metadata.keys());
+        String[] keys = keyList.toArray(new String[keyList.size()]);
+        JSONObject description = new JSONObject(this.metadata, keys);
         description.put("href", this.hrefPrefix + this.href);
         return description;
     }
@@ -255,7 +253,7 @@ public class Property<T> {
      *
      * @return The metadata.
      */
-    public Map<String, Object> getMetadata() {
+    public JSONObject getMetadata() {
         return this.metadata;
     }
 }

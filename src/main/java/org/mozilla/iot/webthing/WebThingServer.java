@@ -197,6 +197,8 @@ public class WebThingServer extends RouterNanoHTTPD {
             addRoute("/events", EventsHandler.class, this.things, this.hosts);
             addRoute("/", ThingHandler.class, this.things, this.hosts);
         }
+
+        setNotFoundHandler(Error404UriHandler.class);
     }
 
     /**
