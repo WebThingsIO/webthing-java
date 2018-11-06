@@ -14,6 +14,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceInfo;
@@ -35,6 +37,8 @@ public class WebThingServer extends RouterNanoHTTPD {
     private List<String> hosts;
     private boolean isTls;
     private JmDNS jmdns;
+    private static final int SOCKET_READ_TIMEOUT = 30 * 1000;
+    private static final int WEBSOCKET_PING_INTERVAL = 20 * 1000;
 
     /**
      * Initialize the WebThingServer on port 80.
@@ -225,7 +229,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                      "path=/");
         this.jmdns.registerService(serviceInfo);
 
-        super.start(NanoHTTPD.SOCKET_READ_TIMEOUT, daemon);
+        super.start(this.SOCKET_READ_TIMEOUT, daemon);
     }
 
     /**
@@ -597,7 +601,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                                "Missing Websocket-Key"));
                 }
 
-                NanoWSD.WebSocket webSocket =
+                final NanoWSD.WebSocket webSocket =
                         new ThingWebSocket(thing, session);
                 Response handshakeResponse = webSocket.getHandshakeResponse();
                 try {
@@ -615,6 +619,20 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                 headers.get(NanoWSD.HEADER_WEBSOCKET_PROTOCOL)
                                                        .split(",")[0]);
                 }
+
+                final Timer timer = new Timer();
+                timer.scheduleAtFixedRate(new TimerTask() {
+                                              @Override
+                                              public void run() {
+                                                  try {
+                                                      webSocket.ping(new byte[0]);
+                                                  } catch (IOException e) {
+                                                      timer.cancel();
+                                                  }
+                                              }
+                                          },
+                                          WebThingServer.WEBSOCKET_PING_INTERVAL,
+                                          WebThingServer.WEBSOCKET_PING_INTERVAL);
 
                 return handshakeResponse;
             }
