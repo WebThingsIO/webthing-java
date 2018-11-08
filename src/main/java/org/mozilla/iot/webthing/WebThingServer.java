@@ -29,16 +29,15 @@ import fi.iki.elonen.router.RouterNanoHTTPD;
  * Server to represent a Web Thing over HTTP.
  */
 public class WebThingServer extends RouterNanoHTTPD {
+    private static final int SOCKET_READ_TIMEOUT = 30 * 1000;
+    private static final int WEBSOCKET_PING_INTERVAL = 20 * 1000;
     private int port;
-    private String ip;
     private ThingsType things;
     private String name;
     private String hostname;
     private List<String> hosts;
     private boolean isTls;
     private JmDNS jmdns;
-    private static final int SOCKET_READ_TIMEOUT = 30 * 1000;
-    private static final int WEBSOCKET_PING_INTERVAL = 20 * 1000;
 
     /**
      * Initialize the WebThingServer on port 80.
@@ -98,17 +97,17 @@ public class WebThingServer extends RouterNanoHTTPD {
         this.port = port;
         this.things = things;
         this.name = things.getName();
-        this.ip = Utils.getIP();
         this.isTls = sslOptions != null;
         this.hostname = hostname;
 
         this.hosts = new ArrayList<>();
-        this.hosts.add("127.0.0.1");
-        this.hosts.add(String.format("127.0.0.1:%d", this.port));
         this.hosts.add("localhost");
         this.hosts.add(String.format("localhost:%d", this.port));
-        this.hosts.add(this.ip);
-        this.hosts.add(String.format("%s:%d", this.ip, this.port));
+
+        for (String address : Utils.getAddresses()) {
+            this.hosts.add(address);
+            this.hosts.add(String.format("%s:%d", address, this.port));
+        }
 
         if (this.hostname != null) {
             this.hostname = this.hostname.toLowerCase();
@@ -124,82 +123,100 @@ public class WebThingServer extends RouterNanoHTTPD {
         this.setRoutePrioritizer(new InsertionOrderRoutePrioritizer());
 
         if (MultipleThings.class.isInstance(things)) {
-            String wsBase = String.format("%s://%s:%d/",
-                                          this.isTls ? "wss" : "ws",
-                                          this.ip,
-                                          this.port);
-
             List<Thing> list = things.getThings();
             for (int i = 0; i < list.size(); ++i) {
                 Thing thing = list.get(i);
                 thing.setHrefPrefix(String.format("/%d", i));
-                thing.setWsHref(wsBase + Integer.toString(i));
             }
 
             // These are matched in the order they are added.
             addRoute("/:thingId/properties/:propertyName",
                      PropertyHandler.class,
                      this.things,
-                     this.hosts);
+                     this.hosts,
+                     this.isTls);
             addRoute("/:thingId/properties",
                      PropertiesHandler.class,
                      this.things,
-                     this.hosts);
+                     this.hosts,
+                     this.isTls);
             addRoute("/:thingId/actions/:actionName/:actionId",
                      ActionIDHandler.class,
                      this.things,
-                     this.hosts);
+                     this.hosts,
+                     this.isTls);
             addRoute("/:thingId/actions/:actionName",
                      ActionHandler.class,
                      this.things,
-                     this.hosts);
+                     this.hosts,
+                     this.isTls);
             addRoute("/:thingId/actions",
                      ActionsHandler.class,
                      this.things,
-                     this.hosts);
+                     this.hosts,
+                     this.isTls);
             addRoute("/:thingId/events/:eventName",
                      EventHandler.class,
                      this.things,
-                     this.hosts);
+                     this.hosts,
+                     this.isTls);
             addRoute("/:thingId/events",
                      EventsHandler.class,
                      this.things,
-                     this.hosts);
-            addRoute("/:thingId", ThingHandler.class, this.things, this.hosts);
-            addRoute("/", ThingsHandler.class, this.things, this.hosts);
+                     this.hosts,
+                     this.isTls);
+            addRoute("/:thingId",
+                     ThingHandler.class,
+                     this.things,
+                     this.hosts,
+                     this.isTls);
+            addRoute("/",
+                     ThingsHandler.class,
+                     this.things,
+                     this.hosts,
+                     this.isTls);
         } else {
-            String wsHref = String.format("%s://%s:%d",
-                                          this.isTls ? "wss" : "ws",
-                                          this.ip,
-                                          this.port);
-
-            Thing thing = things.getThing(0);
-            thing.setWsHref(wsHref);
-
             // These are matched in the order they are added.
             addRoute("/properties/:propertyName",
                      PropertyHandler.class,
                      this.things,
-                     this.hosts);
+                     this.hosts,
+                     this.isTls);
             addRoute("/properties",
                      PropertiesHandler.class,
                      this.things,
-                     this.hosts);
+                     this.hosts,
+                     this.isTls);
             addRoute("/actions/:actionName/:actionId",
                      ActionIDHandler.class,
                      this.things,
-                     this.hosts);
+                     this.hosts,
+                     this.isTls);
             addRoute("/actions/:actionName",
                      ActionHandler.class,
                      this.things,
-                     this.hosts);
-            addRoute("/actions", ActionsHandler.class, this.things, this.hosts);
+                     this.hosts,
+                     this.isTls);
+            addRoute("/actions",
+                     ActionsHandler.class,
+                     this.things,
+                     this.hosts,
+                     this.isTls);
             addRoute("/events/:eventName",
                      EventHandler.class,
                      this.things,
-                     this.hosts);
-            addRoute("/events", EventsHandler.class, this.things, this.hosts);
-            addRoute("/", ThingHandler.class, this.things, this.hosts);
+                     this.hosts,
+                     this.isTls);
+            addRoute("/events",
+                     EventsHandler.class,
+                     this.things,
+                     this.hosts,
+                     this.isTls);
+            addRoute("/",
+                     ThingHandler.class,
+                     this.things,
+                     this.hosts,
+                     this.isTls);
         }
 
         setNotFoundHandler(Error404UriHandler.class);
@@ -518,6 +535,15 @@ public class WebThingServer extends RouterNanoHTTPD {
 
             return false;
         }
+
+        /**
+         * Determine whether or not this request is HTTPS.
+         *
+         * @return Boolean indicating whether or not the request is secure.
+         */
+        public boolean isSecure(UriResource uriResource) {
+            return uriResource.initParameter(2, Boolean.class);
+        }
     }
 
     /**
@@ -542,11 +568,25 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                         null);
             }
 
+            String wsHref = String.format("%s://%s",
+                                          this.isSecure(uriResource) ?
+                                          "wss" :
+                                          "ws",
+                                          session.getHeaders().get("host"));
+
             ThingsType things = uriResource.initParameter(0, ThingsType.class);
 
             JSONArray list = new JSONArray();
             for (Thing thing : things.getThings()) {
-                list.put(thing.asThingDescription());
+                JSONObject description = thing.asThingDescription();
+
+                JSONObject link = new JSONObject();
+                link.put("rel", "alternate");
+                link.put("href",
+                         String.format("%s%s", wsHref, thing.getHref()));
+                description.getJSONArray("links").put(link);
+
+                list.put(description);
             }
 
             return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
@@ -637,10 +677,21 @@ public class WebThingServer extends RouterNanoHTTPD {
                 return handshakeResponse;
             }
 
+            String wsHref = String.format("%s://%s%s",
+                                          this.isSecure(uriResource) ?
+                                          "wss" :
+                                          "ws",
+                                          session.getHeaders().get("host"),
+                                          thing.getHref());
+            JSONObject description = thing.asThingDescription();
+            JSONObject link = new JSONObject();
+            link.put("rel", "alternate");
+            link.put("href", wsHref);
+            description.getJSONArray("links").put(link);
+
             return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                                  "application/json",
-                                                                 thing.asThingDescription()
-                                                                      .toString()));
+                                                                 description.toString()));
         }
 
         /**
