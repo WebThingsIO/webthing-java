@@ -35,7 +35,6 @@ public class Thing {
     private List<Event> events;
     private Set<WebThingServer.ThingHandler.ThingWebSocket> subscribers;
     private String hrefPrefix;
-    private String wsHref;
     private String uiHref;
 
     /**
@@ -76,7 +75,6 @@ public class Thing {
         this.events = new ArrayList<>();
         this.subscribers = new HashSet<>();
         this.hrefPrefix = "";
-        this.wsHref = null;
         this.uiHref = null;
     }
 
@@ -129,13 +127,6 @@ public class Thing {
             eventsLink.put("href", String.format("%s/events", this.hrefPrefix));
             obj.accumulate("links", eventsLink);
 
-            if (this.wsHref != null) {
-                JSONObject wsLink = new JSONObject();
-                wsLink.put("rel", "alternate");
-                wsLink.put("href", this.wsHref);
-                obj.accumulate("links", wsLink);
-            }
-
             if (this.uiHref != null) {
                 JSONObject uiLink = new JSONObject();
                 uiLink.put("rel", "alternate");
@@ -161,24 +152,6 @@ public class Thing {
         }
 
         return "/";
-    }
-
-    /**
-     * Get this thing's websocket href.
-     *
-     * @return The href.
-     */
-    public String getWsHref() {
-        return wsHref;
-    }
-
-    /**
-     * Set the href of this thing's websocket.
-     *
-     * @param href The href
-     */
-    public void setWsHref(String href) {
-        this.wsHref = href;
     }
 
     /**
