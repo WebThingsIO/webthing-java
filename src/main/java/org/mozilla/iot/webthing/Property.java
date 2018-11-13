@@ -106,12 +106,7 @@ public class Property<T> {
                     }
                     break;
                 case "integer":
-                    if (!(value instanceof Number)) {
-                        throw new PropertyError("Value must be an integer");
-                    }
-
-                    double v = ((Number)value).doubleValue();
-                    if (Math.abs(v - Math.round(v)) <= 0.000001) {
+                    if (!(value instanceof Integer)) {
                         throw new PropertyError("Value must be an integer");
                     }
                     break;
