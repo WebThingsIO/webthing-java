@@ -77,7 +77,7 @@ public class MultipleThings {
             JSONObject brightnessDescription = new JSONObject();
             brightnessDescription.put("@type", "BrightnessProperty");
             brightnessDescription.put("label", "Brightness");
-            brightnessDescription.put("type", "number");
+            brightnessDescription.put("type", "integer");
             brightnessDescription.put("description",
                                       "The level of light from 0-100");
             brightnessDescription.put("minimum", 0);
@@ -108,11 +108,11 @@ public class MultipleThings {
             fadeInput.put("required",
                           new JSONArray(Arrays.asList("brightness",
                                                       "duration")));
-            fadeBrightness.put("type", "number");
+            fadeBrightness.put("type", "integer");
             fadeBrightness.put("minimum", 0);
             fadeBrightness.put("maximum", 100);
             fadeBrightness.put("unit", "percent");
-            fadeDuration.put("type", "number");
+            fadeDuration.put("type", "integer");
             fadeDuration.put("minimum", 1);
             fadeDuration.put("unit", "milliseconds");
             fadeProperties.put("brightness", fadeBrightness);
@@ -125,7 +125,7 @@ public class MultipleThings {
             overheatedMetadata.put("description",
                                    "The lamp has exceeded its safe operating temperature");
             overheatedMetadata.put("type", "number");
-            overheatedMetadata.put("unit", "celsius");
+            overheatedMetadata.put("unit", "degree celsius");
             this.addAvailableEvent("overheated", overheatedMetadata);
         }
 
