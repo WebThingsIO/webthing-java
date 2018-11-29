@@ -89,11 +89,27 @@ public class Thing {
         JSONObject events = new JSONObject();
 
         this.availableActions.forEach((name, value) -> {
-            actions.put(name, value.getMetadata());
+            JSONObject metadata = value.getMetadata();
+            JSONArray links = new JSONArray();
+            JSONObject link = new JSONObject();
+            link.put("rel", "action");
+            link.put("href",
+                     String.format("%s/actions/%s", this.hrefPrefix, name));
+            links.put(link);
+            metadata.put("links", links);
+            actions.put(name, metadata);
         });
 
         this.availableEvents.forEach((name, value) -> {
-            events.put(name, value.getMetadata());
+            JSONObject metadata = value.getMetadata();
+            JSONArray links = new JSONArray();
+            JSONObject link = new JSONObject();
+            link.put("rel", "event");
+            link.put("href",
+                     String.format("%s/events/%s", this.hrefPrefix, name));
+            links.put(link);
+            metadata.put("links", links);
+            events.put(name, metadata);
         });
 
         try {
@@ -179,14 +195,6 @@ public class Thing {
      */
     public void setHrefPrefix(String prefix) {
         this.hrefPrefix = prefix;
-
-        this.availableActions.forEach((name, value) -> {
-            value.setHrefPrefix(prefix);
-        });
-
-        this.availableEvents.forEach((name, value) -> {
-            value.setHrefPrefix(prefix);
-        });
 
         this.properties.forEach((name, value) -> {
             value.setHrefPrefix(prefix);
@@ -646,16 +654,6 @@ public class Thing {
         }
 
         /**
-         * Set the prefix of this event's href.
-         *
-         * @param prefix The prefix
-         */
-        public void setHrefPrefix(String prefix) {
-            String href = this.metadata.getString("href");
-            this.metadata.put("href", prefix + href);
-        }
-
-        /**
          * Get the event metadata.
          *
          * @return The metadata.
@@ -718,16 +716,6 @@ public class Thing {
             } else {
                 this.schema = null;
             }
-        }
-
-        /**
-         * Set the prefix of this action's href.
-         *
-         * @param prefix The prefix
-         */
-        public void setHrefPrefix(String prefix) {
-            String href = this.metadata.getString("href");
-            this.metadata.put("href", prefix + href);
         }
 
         /**

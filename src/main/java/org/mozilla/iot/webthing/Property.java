@@ -3,8 +3,6 @@
  */
 package org.mozilla.iot.webthing;
 
-import com.google.common.collect.Lists;
-
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -12,6 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mozilla.iot.webthing.errors.PropertyError;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -94,10 +93,18 @@ public class Property<T> {
      * @return Description of the property as an object.
      */
     public JSONObject asPropertyDescription() {
-        List<String> keyList = Lists.newArrayList(this.metadata.keys());
+        List<String> keyList = new ArrayList<>();
+        this.metadata.keys().forEachRemaining((key) -> {
+            keyList.add(key);
+        });
         String[] keys = keyList.toArray(new String[keyList.size()]);
         JSONObject description = new JSONObject(this.metadata, keys);
-        description.put("href", this.hrefPrefix + this.href);
+        JSONArray links = new JSONArray();
+        JSONObject link = new JSONObject();
+        link.put("rel", "property");
+        link.put("href", this.hrefPrefix + this.href);
+        links.put(link);
+        description.put("links", links);
         return description;
     }
 
