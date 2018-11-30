@@ -7,6 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="webthing" />
+        <module name="webthing-java" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
