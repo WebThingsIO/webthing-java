@@ -74,7 +74,7 @@ The **`on`** property reports and sets the on/off state of the light. For this, 
 ```java
 JSONObject onDescription = new JSONObject();
 onDescription.put("@type", "OnOffProperty");
-onDescription.put("label", "On/Off");
+onDescription.put("title", "On/Off");
 onDescription.put("type", "boolean");
 onDescription.put("description", "Whether the lamp is turned on");
 
@@ -94,7 +94,7 @@ The **`brightness`** property reports the brightness level of the light and sets
 ```java
 JSONObject brightnessDescription = new JSONObject();
 brightnessDescription.put("@type", "BrightnessProperty");
-brightnessDescription.put("label", "Brightness");
+brightnessDescription.put("title", "Brightness");
 brightnessDescription.put("type", "number");
 brightnessDescription.put("description",
                           "The level of light from 0-100");
@@ -157,7 +157,7 @@ Then we create and add the appropriate property:
     ```java
     JSONObject levelDescription = new JSONObject();
     levelDescription.put("@type", "LevelProperty");
-    levelDescription.put("label", "Humidity");
+    levelDescription.put("title", "Humidity");
     levelDescription.put("type", "number");
     levelDescription.put("description", "The current humidity in %");
     levelDescription.put("minimum", 0);

@@ -23,7 +23,7 @@ public class SingleThing {
 
         JSONObject onDescription = new JSONObject();
         onDescription.put("@type", "OnOffProperty");
-        onDescription.put("label", "On/Off");
+        onDescription.put("title", "On/Off");
         onDescription.put("type", "boolean");
         onDescription.put("description", "Whether the lamp is turned on");
         thing.addProperty(new Property(thing,
@@ -33,7 +33,7 @@ public class SingleThing {
 
         JSONObject brightnessDescription = new JSONObject();
         brightnessDescription.put("@type", "BrightnessProperty");
-        brightnessDescription.put("label", "Brightness");
+        brightnessDescription.put("title", "Brightness");
         brightnessDescription.put("type", "integer");
         brightnessDescription.put("description",
                                   "The level of light from 0-100");
@@ -50,7 +50,7 @@ public class SingleThing {
         JSONObject fadeProperties = new JSONObject();
         JSONObject fadeBrightness = new JSONObject();
         JSONObject fadeDuration = new JSONObject();
-        fadeMetadata.put("label", "Fade");
+        fadeMetadata.put("title", "Fade");
         fadeMetadata.put("description", "Fade the lamp to a given level");
         fadeInput.put("type", "object");
         fadeInput.put("required",

@@ -60,7 +60,7 @@ public class MultipleThings {
 
             JSONObject onDescription = new JSONObject();
             onDescription.put("@type", "OnOffProperty");
-            onDescription.put("label", "On/Off");
+            onDescription.put("title", "On/Off");
             onDescription.put("type", "boolean");
             onDescription.put("description", "Whether the lamp is turned on");
 
@@ -76,7 +76,7 @@ public class MultipleThings {
 
             JSONObject brightnessDescription = new JSONObject();
             brightnessDescription.put("@type", "BrightnessProperty");
-            brightnessDescription.put("label", "Brightness");
+            brightnessDescription.put("title", "Brightness");
             brightnessDescription.put("type", "integer");
             brightnessDescription.put("description",
                                       "The level of light from 0-100");
@@ -102,7 +102,7 @@ public class MultipleThings {
             JSONObject fadeProperties = new JSONObject();
             JSONObject fadeBrightness = new JSONObject();
             JSONObject fadeDuration = new JSONObject();
-            fadeMetadata.put("label", "Fade");
+            fadeMetadata.put("title", "Fade");
             fadeMetadata.put("description", "Fade the lamp to a given level");
             fadeInput.put("type", "object");
             fadeInput.put("required",
@@ -171,7 +171,7 @@ public class MultipleThings {
 
             JSONObject levelDescription = new JSONObject();
             levelDescription.put("@type", "LevelProperty");
-            levelDescription.put("label", "Humidity");
+            levelDescription.put("title", "Humidity");
             levelDescription.put("type", "number");
             levelDescription.put("description", "The current humidity in %");
             levelDescription.put("minimum", 0);
