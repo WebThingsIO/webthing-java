@@ -48,7 +48,7 @@ public class WebThingServer extends RouterNanoHTTPD {
      */
     public WebThingServer(ThingsType things)
             throws IOException, NullPointerException {
-        this(things, 80, null, null);
+        this(things, 80, null, null, null);
     }
 
     /**
@@ -59,9 +59,9 @@ public class WebThingServer extends RouterNanoHTTPD {
      * @throws IOException          If server fails to bind.
      * @throws NullPointerException If something bad happened.
      */
-    public WebThingServer(ThingsType things, Integer port)
+    public WebThingServer(ThingsType things, int port)
             throws IOException, NullPointerException {
-        this(things, port, null, null);
+        this(things, port, null, null, null);
     }
 
     /**
@@ -73,9 +73,9 @@ public class WebThingServer extends RouterNanoHTTPD {
      * @throws IOException          If server fails to bind.
      * @throws NullPointerException If something bad happened.
      */
-    public WebThingServer(ThingsType things, Integer port, String hostname)
+    public WebThingServer(ThingsType things, int port, String hostname)
             throws IOException, NullPointerException {
-        this(things, port, hostname, null);
+        this(things, port, hostname, null, null);
     }
 
     /**
@@ -89,9 +89,29 @@ public class WebThingServer extends RouterNanoHTTPD {
      * @throws NullPointerException If something bad happened.
      */
     public WebThingServer(ThingsType things,
-                          Integer port,
+                          int port,
                           String hostname,
                           SSLOptions sslOptions)
+            throws IOException, NullPointerException {
+        this(things, port, hostname, sslOptions, null);
+    }
+
+    /**
+     * Initialize the WebThingServer.
+     *
+     * @param things           List of Things managed by this server
+     * @param port             Port to listen on
+     * @param hostname         Host name, i.e. mything.com
+     * @param sslOptions       SSL options to pass to the NanoHTTPD server
+     * @param additionalRoutes List of additional routes to add to the server
+     * @throws IOException          If server fails to bind.
+     * @throws NullPointerException If something bad happened.
+     */
+    public WebThingServer(ThingsType things,
+                          int port,
+                          String hostname,
+                          SSLOptions sslOptions,
+                          List<Route> additionalRoutes)
             throws IOException, NullPointerException {
         super(port);
         this.port = port;
@@ -121,6 +141,12 @@ public class WebThingServer extends RouterNanoHTTPD {
         }
 
         this.setRoutePrioritizer(new InsertionOrderRoutePrioritizer());
+
+        if (additionalRoutes != null && additionalRoutes.size() > 0) {
+            additionalRoutes.forEach(o -> addRoute(o.url,
+                                                   o.handlerClass,
+                                                   o.parameters));
+        }
 
         if (MultipleThings.class.isInstance(things)) {
             List<Thing> list = things.getThings();
@@ -1641,6 +1667,30 @@ public class WebThingServer extends RouterNanoHTTPD {
          */
         public String getName() {
             return this.name;
+        }
+    }
+
+    /**
+     * Mini-class used to define additional API routes.
+     */
+    public class Route {
+        public String url;
+        public Class handlerClass;
+        public Object[] parameters;
+
+        /**
+         * Initialize the new route.
+         * <p>
+         * See: https://github.com/NanoHttpd/nanohttpd/blob/master/nanolets/src/main/java/org/nanohttpd/router/RouterNanoHTTPD.java
+         *
+         * @param url
+         * @param handlerClass
+         * @param parameters
+         */
+        public Route(String url, Class handlerClass, Object[] parameters) {
+            this.url = url;
+            this.handlerClass = handlerClass;
+            this.parameters = parameters;
         }
     }
 }
