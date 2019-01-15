@@ -1673,9 +1673,9 @@ public class WebThingServer extends RouterNanoHTTPD {
     /**
      * Mini-class used to define additional API routes.
      */
-    public class Route {
+    public static class Route {
         public String url;
-        public Class handlerClass;
+        public Class<?> handlerClass;
         public Object[] parameters;
 
         /**
@@ -1687,7 +1687,7 @@ public class WebThingServer extends RouterNanoHTTPD {
          * @param handlerClass
          * @param parameters
          */
-        public Route(String url, Class handlerClass, Object[] parameters) {
+        public Route(String url, Class<?> handlerClass, Object... parameters) {
             this.url = url;
             this.handlerClass = handlerClass;
             this.parameters = parameters;
