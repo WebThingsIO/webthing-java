@@ -10,9 +10,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mozilla.iot.webthing.errors.PropertyError;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * A Property represents an individual state value of a thing.
  *
@@ -93,18 +90,19 @@ public class Property<T> {
      * @return Description of the property as an object.
      */
     public JSONObject asPropertyDescription() {
-        List<String> keyList = new ArrayList<>();
-        this.metadata.keys().forEachRemaining((key) -> {
-            keyList.add(key);
-        });
-        String[] keys = keyList.toArray(new String[keyList.size()]);
-        JSONObject description = new JSONObject(this.metadata, keys);
-        JSONArray links = new JSONArray();
+        JSONObject description = new JSONObject(this.metadata.toString());
         JSONObject link = new JSONObject();
         link.put("rel", "property");
         link.put("href", this.hrefPrefix + this.href);
-        links.put(link);
-        description.put("links", links);
+
+        if (description.has("links")) {
+            description.getJSONArray("links").put(link);
+        } else {
+            JSONArray links = new JSONArray();
+            links.put(link);
+            description.put("links", links);
+        }
+
         return description;
     }
 
