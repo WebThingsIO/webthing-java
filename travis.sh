@@ -14,6 +14,7 @@ EXAMPLE_PID=$!
 sleep 15
 ./webthing-tester/test-client.py
 kill -15 $EXAMPLE_PID
+wait $EXAMPLE_PID || true
 
 # build and test the multiple-things example
 java -cp "${jar}" org.mozilla.iot.webthing.example.MultipleThings &
@@ -21,3 +22,4 @@ EXAMPLE_PID=$!
 sleep 15
 ./webthing-tester/test-client.py --path-prefix "/0"
 kill -15 $EXAMPLE_PID
+wait $EXAMPLE_PID || true
