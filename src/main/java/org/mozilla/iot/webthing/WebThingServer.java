@@ -35,6 +35,7 @@ public class WebThingServer extends RouterNanoHTTPD {
     private ThingsType things;
     private String name;
     private String hostname;
+    private String basePath;
     private List<String> hosts;
     private boolean isTls;
     private JmDNS jmdns;
@@ -48,7 +49,7 @@ public class WebThingServer extends RouterNanoHTTPD {
      */
     public WebThingServer(ThingsType things)
             throws IOException, NullPointerException {
-        this(things, 80, null, null, null);
+        this(things, 80, null, null, null, "/");
     }
 
     /**
@@ -61,7 +62,7 @@ public class WebThingServer extends RouterNanoHTTPD {
      */
     public WebThingServer(ThingsType things, int port)
             throws IOException, NullPointerException {
-        this(things, port, null, null, null);
+        this(things, port, null, null, null, "/");
     }
 
     /**
@@ -75,7 +76,7 @@ public class WebThingServer extends RouterNanoHTTPD {
      */
     public WebThingServer(ThingsType things, int port, String hostname)
             throws IOException, NullPointerException {
-        this(things, port, hostname, null, null);
+        this(things, port, hostname, null, null, "/");
     }
 
     /**
@@ -93,7 +94,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                           String hostname,
                           SSLOptions sslOptions)
             throws IOException, NullPointerException {
-        this(things, port, hostname, sslOptions, null);
+        this(things, port, hostname, sslOptions, null, "/");
     }
 
     /**
@@ -113,12 +114,35 @@ public class WebThingServer extends RouterNanoHTTPD {
                           SSLOptions sslOptions,
                           List<Route> additionalRoutes)
             throws IOException, NullPointerException {
+        this(things, port, hostname, sslOptions, additionalRoutes, "/");
+    }
+
+    /**
+     * Initialize the WebThingServer.
+     *
+     * @param things           List of Things managed by this server
+     * @param port             Port to listen on
+     * @param hostname         Host name, i.e. mything.com
+     * @param sslOptions       SSL options to pass to the NanoHTTPD server
+     * @param additionalRoutes List of additional routes to add to the server
+     * @param basePath         Base URL path to use, rather than '/'
+     * @throws IOException          If server fails to bind.
+     * @throws NullPointerException If something bad happened.
+     */
+    public WebThingServer(ThingsType things,
+                          int port,
+                          String hostname,
+                          SSLOptions sslOptions,
+                          List<Route> additionalRoutes,
+                          String basePath)
+            throws IOException, NullPointerException {
         super(port);
         this.port = port;
         this.things = things;
         this.name = things.getName();
         this.isTls = sslOptions != null;
         this.hostname = hostname;
+        this.basePath = basePath.replaceAll("/$", "");
 
         this.hosts = new ArrayList<>();
         this.hosts.add("localhost");
@@ -143,7 +167,7 @@ public class WebThingServer extends RouterNanoHTTPD {
         this.setRoutePrioritizer(new InsertionOrderRoutePrioritizer());
 
         if (additionalRoutes != null && additionalRoutes.size() > 0) {
-            additionalRoutes.forEach(o -> addRoute(o.url,
+            additionalRoutes.forEach(o -> addRoute(this.basePath + o.url,
                                                    o.handlerClass,
                                                    o.parameters));
         }
@@ -152,93 +176,95 @@ public class WebThingServer extends RouterNanoHTTPD {
             List<Thing> list = things.getThings();
             for (int i = 0; i < list.size(); ++i) {
                 Thing thing = list.get(i);
-                thing.setHrefPrefix(String.format("/%d", i));
+                thing.setHrefPrefix(String.format("%s/%d", this.basePath, i));
             }
 
             // These are matched in the order they are added.
-            addRoute("/:thingId/properties/:propertyName",
+            addRoute(this.basePath + "/:thingId/properties/:propertyName",
                      PropertyHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/:thingId/properties",
+            addRoute(this.basePath + "/:thingId/properties",
                      PropertiesHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/:thingId/actions/:actionName/:actionId",
+            addRoute(this.basePath + "/:thingId/actions/:actionName/:actionId",
                      ActionIDHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/:thingId/actions/:actionName",
+            addRoute(this.basePath + "/:thingId/actions/:actionName",
                      ActionHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/:thingId/actions",
+            addRoute(this.basePath + "/:thingId/actions",
                      ActionsHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/:thingId/events/:eventName",
+            addRoute(this.basePath + "/:thingId/events/:eventName",
                      EventHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/:thingId/events",
+            addRoute(this.basePath + "/:thingId/events",
                      EventsHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/:thingId",
+            addRoute(this.basePath + "/:thingId",
                      ThingHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/",
+            addRoute(this.basePath + "/",
                      ThingsHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
         } else {
+            things.getThing(0).setHrefPrefix(this.basePath);
+
             // These are matched in the order they are added.
-            addRoute("/properties/:propertyName",
+            addRoute(this.basePath + "/properties/:propertyName",
                      PropertyHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/properties",
+            addRoute(this.basePath + "/properties",
                      PropertiesHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/actions/:actionName/:actionId",
+            addRoute(this.basePath + "/actions/:actionName/:actionId",
                      ActionIDHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/actions/:actionName",
+            addRoute(this.basePath + "/actions/:actionName",
                      ActionHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/actions",
+            addRoute(this.basePath + "/actions",
                      ActionsHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/events/:eventName",
+            addRoute(this.basePath + "/events/:eventName",
                      EventHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/events",
+            addRoute(this.basePath + "/events",
                      EventsHandler.class,
                      this.things,
                      this.hosts,
                      this.isTls);
-            addRoute("/",
+            addRoute(this.basePath + "/",
                      ThingHandler.class,
                      this.things,
                      this.hosts,
