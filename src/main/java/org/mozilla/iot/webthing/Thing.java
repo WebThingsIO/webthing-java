@@ -446,8 +446,6 @@ public class Thing {
             metadata = new JSONObject();
         }
 
-        metadata.put("href", String.format("/events/%s", name));
-
         this.availableEvents.put(name, new AvailableEvent(metadata));
     }
 
@@ -516,8 +514,6 @@ public class Thing {
         if (metadata == null) {
             metadata = new JSONObject();
         }
-
-        metadata.put("href", String.format("/actions/%s", name));
 
         this.availableActions.put(name, new AvailableAction(metadata, cls));
         this.actions.put(name, new ArrayList<>());
