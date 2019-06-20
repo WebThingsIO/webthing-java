@@ -26,7 +26,7 @@ import java.util.Set;
 public class Thing {
     private String context;
     private JSONArray type;
-    private String name;
+    private String title;
     private String description;
     private Map<String, Property> properties;
     private Map<String, AvailableAction> availableActions;
@@ -40,31 +40,31 @@ public class Thing {
     /**
      * Initialize the object.
      *
-     * @param name The thing's name
+     * @param title The thing's title
      */
-    public Thing(String name) {
-        this(name, new JSONArray(), "");
+    public Thing(String title) {
+        this(title, new JSONArray(), "");
     }
 
     /**
      * Initialize the object.
      *
-     * @param name The thing's name
-     * @param type The thing's type(s)
+     * @param title The thing's title
+     * @param type  The thing's type(s)
      */
-    public Thing(String name, JSONArray type) {
-        this(name, type, "");
+    public Thing(String title, JSONArray type) {
+        this(title, type, "");
     }
 
     /**
      * Initialize the object.
      *
-     * @param name        The thing's name
+     * @param title       The thing's title
      * @param type        The thing's type(s)
      * @param description Description of the thing
      */
-    public Thing(String name, JSONArray type, String description) {
-        this.name = name;
+    public Thing(String title, JSONArray type, String description) {
+        this.title = title;
         this.context = "https://iot.mozilla.org/schemas";
         this.type = type;
         this.description = description;
@@ -113,7 +113,7 @@ public class Thing {
         });
 
         try {
-            obj.put("name", this.getName());
+            obj.put("title", this.getTitle());
             obj.put("href",
                     this.hrefPrefix.length() > 0 ? this.hrefPrefix : "/");
             obj.put("@context", this.getContext());
@@ -208,12 +208,12 @@ public class Thing {
     }
 
     /**
-     * Get the name of the thing.
+     * Get the title of the thing.
      *
-     * @return The name.
+     * @return The title.
      */
-    public String getName() {
-        return this.name;
+    public String getTitle() {
+        return this.title;
     }
 
     /**

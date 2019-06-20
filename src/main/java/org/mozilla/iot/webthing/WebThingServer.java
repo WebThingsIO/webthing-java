@@ -281,8 +281,9 @@ public class WebThingServer extends RouterNanoHTTPD {
      * @throws IOException on failure to listen on port
      */
     public void start(boolean daemon) throws IOException {
-        this.jmdns = JmDNS.create(hostname == null ? InetAddress.getLocalHost()
-                                                   : InetAddress.getByName(hostname));
+        this.jmdns = JmDNS.create(hostname == null ?
+                                  InetAddress.getLocalHost() :
+                                  InetAddress.getByName(hostname));
 
         String systemHostname = this.jmdns.getHostName();
         if (systemHostname.endsWith(".")) {
@@ -1643,7 +1644,7 @@ public class WebThingServer extends RouterNanoHTTPD {
          * @return The server name.
          */
         public String getName() {
-            return this.thing.getName();
+            return this.thing.getTitle();
         }
     }
 
