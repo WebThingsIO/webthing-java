@@ -54,7 +54,8 @@ public class MultipleThings {
      */
     public static class ExampleDimmableLight extends Thing {
         public ExampleDimmableLight() {
-            super("My Lamp",
+            super("urn:dev:ops:my-lamp-1234",
+                  "My Lamp",
                   new JSONArray(Arrays.asList("OnOffSwitch", "Light")),
                   "A web connected lamp");
 
@@ -165,7 +166,8 @@ public class MultipleThings {
         private final Value<Double> level;
 
         public FakeGpioHumiditySensor() {
-            super("My Humidity Sensor",
+            super("urn:dev:ops:my-humidity-sensor-1234",
+                  "My Humidity Sensor",
                   new JSONArray(Arrays.asList("MultiLevelSensor")),
                   "A web connected humidity sensor");
 
