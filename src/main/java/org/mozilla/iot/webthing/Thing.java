@@ -24,6 +24,7 @@ import java.util.Set;
  * A Web Thing.
  */
 public class Thing {
+    private String id;
     private String context;
     private JSONArray type;
     private String title;
@@ -40,30 +41,34 @@ public class Thing {
     /**
      * Initialize the object.
      *
+     * @param id    The thing's unique ID - must be a URI
      * @param title The thing's title
      */
-    public Thing(String title) {
-        this(title, new JSONArray(), "");
+    public Thing(String id, String title) {
+        this(id, title, new JSONArray(), "");
     }
 
     /**
      * Initialize the object.
      *
+     * @param id    The thing's unique ID - must be a URI
      * @param title The thing's title
      * @param type  The thing's type(s)
      */
-    public Thing(String title, JSONArray type) {
-        this(title, type, "");
+    public Thing(String id, String title, JSONArray type) {
+        this(id, title, type, "");
     }
 
     /**
      * Initialize the object.
      *
+     * @param id          The thing's unique ID - must be a URI
      * @param title       The thing's title
      * @param type        The thing's type(s)
      * @param description Description of the thing
      */
-    public Thing(String title, JSONArray type, String description) {
+    public Thing(String id, String title, JSONArray type, String description) {
+        this.id = id;
         this.title = title;
         this.context = "https://iot.mozilla.org/schemas";
         this.type = type;
@@ -113,9 +118,8 @@ public class Thing {
         });
 
         try {
+            obj.put("id", this.getId());
             obj.put("title", this.getTitle());
-            obj.put("href",
-                    this.hrefPrefix.length() > 0 ? this.hrefPrefix : "/");
             obj.put("@context", this.getContext());
             obj.put("@type", this.getType());
             obj.put("properties", this.getPropertyDescriptions());
@@ -205,6 +209,15 @@ public class Thing {
                 action.setHrefPrefix(prefix);
             });
         });
+    }
+
+    /**
+     * Get the ID of the thing.
+     *
+     * @return The ID.
+     */
+    public String getId() {
+        return this.id;
     }
 
     /**

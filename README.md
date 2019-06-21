@@ -62,7 +62,8 @@ Imagine you have a dimmable light that you want to expose via the web of things 
 First we create a new Thing:
 
 ```java
-Thing light = new Thing("My Lamp",
+Thing light = new Thing("urn:dev:ops:my-lamp-1234",
+                        "My Lamp",
                         new JSONArray(Arrays.asList("OnOffSwitch", "Light")),
                         "A web connected lamp");
 ```
@@ -145,7 +146,8 @@ A [`MultiLevelSensor`](https://iot.mozilla.org/schemas/#MultiLevelSensor) (a sen
 First we create a new Thing:
 
 ```java
-Thing sensor = new Thing("My Humidity Sensor",
+Thing sensor = new Thing("urn:dev:ops:my-humidity-sensor-1234",
+                         "My Humidity Sensor",
                          new JSONArray(Arrays.asList("MultiLevelSensor")),
                          "A web connected humidity sensor");
 ```

@@ -640,6 +640,20 @@ public class WebThingServer extends RouterNanoHTTPD {
                          String.format("%s%s", wsHref, thing.getHref()));
                 description.getJSONArray("links").put(link);
 
+                String base = String.format("%s://%s%s",
+                                            this.isSecure(uriResource) ?
+                                            "https" :
+                                            "http",
+                                            session.getHeaders().get("host"),
+                                            thing.getHref());
+                description.put("base", base);
+                JSONObject securityDefinitions = new JSONObject();
+                JSONObject nosecSc = new JSONObject();
+                nosecSc.put("scheme", "nosec");
+                securityDefinitions.put("nosec_sc", nosecSc);
+                description.put("securityDefinitions", securityDefinitions);
+                description.put("security", "nosec_sc");
+
                 list.put(description);
             }
 
@@ -742,6 +756,20 @@ public class WebThingServer extends RouterNanoHTTPD {
             link.put("rel", "alternate");
             link.put("href", wsHref);
             description.getJSONArray("links").put(link);
+            
+            String base = String.format("%s://%s%s",
+                                        this.isSecure(uriResource) ?
+                                        "https" :
+                                        "http",
+                                        session.getHeaders().get("host"),
+                                        thing.getHref());
+            description.put("base", base);
+            JSONObject securityDefinitions = new JSONObject();
+            JSONObject nosecSc = new JSONObject();
+            nosecSc.put("scheme", "nosec");
+            securityDefinitions.put("nosec_sc", nosecSc);
+            description.put("securityDefinitions", securityDefinitions);
+            description.put("security", "nosec_sc");
 
             return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.OK,
                                                                  "application/json",

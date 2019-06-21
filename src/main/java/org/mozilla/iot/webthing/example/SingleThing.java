@@ -16,7 +16,8 @@ import java.util.UUID;
 
 public class SingleThing {
     public static Thing makeThing() {
-        Thing thing = new Thing("My Lamp",
+        Thing thing = new Thing("urn:dev:ops:my-lamp-1234",
+                                "My Lamp",
                                 new JSONArray(Arrays.asList("OnOffSwitch",
                                                             "Light")),
                                 "A web connected lamp");
