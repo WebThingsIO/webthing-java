@@ -646,6 +646,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                                             "http",
                                             session.getHeaders().get("host"),
                                             thing.getHref());
+                description.put("href", thing.getHref());
                 description.put("base", base);
                 JSONObject securityDefinitions = new JSONObject();
                 JSONObject nosecSc = new JSONObject();
