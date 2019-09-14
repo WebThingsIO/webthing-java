@@ -1,6 +1,6 @@
 # webthing
 
-[![Build Status](https://travis-ci.org/mozilla-iot/webthing-java.svg?branch=master)](https://travis-ci.org/mozilla-iot/webthing-java)
+[![Build Status](https://github.com/mozilla-iot/webthing-java/workflows/Java%20package/badge.svg)](https://github.com/mozilla-iot/webthing-java/workflows/Java%20package)
 [![Maven](https://img.shields.io/maven-central/v/org.mozilla.iot/webthing.svg)](https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.mozilla.iot%22%20AND%20a%3A%22webthing%22)
 [![license](https://img.shields.io/badge/license-MPL--2.0-blue.svg)](LICENSE)
 
