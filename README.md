@@ -17,7 +17,7 @@ Add the following dependency to your project:
     <dependency>
         <groupId>org.mozilla.iot</groupId>
         <artifactId>webthing</artifactId>
-        <version>LATEST</version>
+        <version>0.12.0</version>
     </dependency>
 </dependencies>
 ```
@@ -29,7 +29,7 @@ Add the following dependency to your project:
 ```gradle
 dependencies {
     runtime(
-        [group: 'org.mozilla.iot', name: 'webthing', version: 'LATEST'],
+        [group: 'org.mozilla.iot', name: 'webthing', version: '0.12.0'],
     )
 }
 ```
