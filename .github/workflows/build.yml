@@ -1,4 +1,4 @@
-name: Java package
+name: Build
 
 on:
   pull_request:
@@ -13,7 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java_version: ['8.0.x', '9.0.x', '10.0.x', '11.0.x', '12.0.x']
+        java-version: [
+          '8.0.x',
+          '9.0.x',
+          '10.0.x',
+          '11.0.x',
+          '12.0.x',
+          '13.0.x',
+        ]
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
@@ -21,7 +28,7 @@ jobs:
           python-version: '3.7'
       - uses: actions/setup-java@v1
         with:
-          java-version: ${{ matrix.java_version }}
+          java-version: ${{ matrix.java-version }}
           architecture: x64
       - name: Run integration tests
         run: |
