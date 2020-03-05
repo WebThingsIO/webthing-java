@@ -180,7 +180,7 @@ new Thread(()->{
     while(true){
         try {
             Thread.sleep(3000);
-            // Spdates the underlying value, which in turn notifies all
+            // Updates the underlying value, which in turn notifies all
             // listeners
             this.level.notifyOfExternalUpdate(readFromGPIO());
         } catch (InterruptedException e) {
