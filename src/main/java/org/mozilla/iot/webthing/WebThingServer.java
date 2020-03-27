@@ -510,6 +510,12 @@ public class WebThingServer extends RouterNanoHTTPD {
                               UriResource uriResource,
                               Map<String, String> urlParams,
                               IHTTPSession session) {
+            if (method.equals("OPTIONS")) {
+                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.NO_CONTENT,
+                                                                     null,
+                                                                     null));
+            }
+
             return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED,
                                                                  null,
                                                                  null));
@@ -757,7 +763,7 @@ public class WebThingServer extends RouterNanoHTTPD {
             link.put("rel", "alternate");
             link.put("href", wsHref);
             description.getJSONArray("links").put(link);
-            
+
             String base = String.format("%s://%s%s",
                                         this.isSecure(uriResource) ?
                                         "https" :
