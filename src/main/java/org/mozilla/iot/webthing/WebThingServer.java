@@ -1224,35 +1224,40 @@ public class WebThingServer extends RouterNanoHTTPD {
             }
 
             try {
-                JSONObject response = new JSONObject();
                 JSONArray actionNames = json.names();
-                if (actionNames == null) {
+                if (actionNames == null || actionNames.length() != 1) {
                     return corsResponse(NanoHTTPD.newFixedLengthResponse(
                             Response.Status.BAD_REQUEST,
                             null,
                             null));
                 }
 
-                for (int i = 0; i < actionNames.length(); ++i) {
-                    String actionName = actionNames.getString(i);
-                    JSONObject params = json.getJSONObject(actionName);
-                    JSONObject input = null;
-                    if (params.has("input")) {
-                        input = params.getJSONObject("input");
-                    }
-
-                    Action action = thing.performAction(actionName, input);
-                    if (action != null) {
-                        response.put(actionName,
-                                     action.asActionDescription()
-                                           .getJSONObject(actionName));
-
-                        (new ActionRunner(action)).start();
-                    }
+                String actionName = actionNames.getString(0);
+                JSONObject params = json.getJSONObject(actionName);
+                JSONObject input = null;
+                if (params.has("input")) {
+                    input = params.getJSONObject("input");
                 }
-                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.CREATED,
-                                                                     "application/json",
-                                                                     response.toString()));
+
+                Action action = thing.performAction(actionName, input);
+                if (action != null) {
+                    JSONObject response = new JSONObject();
+                    response.put(actionName,
+                                 action.asActionDescription()
+                                       .getJSONObject(actionName));
+
+                    (new ActionRunner(action)).start();
+
+                    return corsResponse(NanoHTTPD.newFixedLengthResponse(
+                            Response.Status.CREATED,
+                            "application/json",
+                            response.toString()));
+                } else {
+                    return corsResponse(NanoHTTPD.newFixedLengthResponse(
+                            Response.Status.BAD_REQUEST,
+                            null,
+                            null));
+                }
             } catch (JSONException e) {
                 return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
                                                                      null,
@@ -1352,39 +1357,47 @@ public class WebThingServer extends RouterNanoHTTPD {
             String actionName = this.getActionName(uriResource, session);
 
             try {
-                JSONObject response = new JSONObject();
                 JSONArray actionNames = json.names();
-                if (actionNames == null) {
+                if (actionNames == null || actionNames.length() != 1) {
                     return corsResponse(NanoHTTPD.newFixedLengthResponse(
                             Response.Status.BAD_REQUEST,
                             null,
                             null));
                 }
 
-                for (int i = 0; i < actionNames.length(); ++i) {
-                    String name = actionNames.getString(i);
-                    if (!name.equals(actionName)) {
-                        continue;
-                    }
-
-                    JSONObject params = json.getJSONObject(name);
-                    JSONObject input = null;
-                    if (params.has("input")) {
-                        input = params.getJSONObject("input");
-                    }
-
-                    Action action = thing.performAction(name, input);
-                    if (action != null) {
-                        response.put(name,
-                                     action.asActionDescription()
-                                           .getJSONObject(name));
-
-                        (new ActionRunner(action)).start();
-                    }
+                String name = actionNames.getString(0);
+                if (!name.equals(actionName)) {
+                    return corsResponse(NanoHTTPD.newFixedLengthResponse(
+                            Response.Status.BAD_REQUEST,
+                            null,
+                            null));
                 }
-                return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.CREATED,
-                                                                     "application/json",
-                                                                     response.toString()));
+
+                JSONObject params = json.getJSONObject(name);
+                JSONObject input = null;
+                if (params.has("input")) {
+                    input = params.getJSONObject("input");
+                }
+
+                Action action = thing.performAction(name, input);
+                if (action != null) {
+                    JSONObject response = new JSONObject();
+                    response.put(name,
+                                 action.asActionDescription()
+                                       .getJSONObject(name));
+
+                    (new ActionRunner(action)).start();
+
+                    return corsResponse(NanoHTTPD.newFixedLengthResponse(
+                            Response.Status.CREATED,
+                            "application/json",
+                            response.toString()));
+                } else {
+                    return corsResponse(NanoHTTPD.newFixedLengthResponse(
+                            Response.Status.BAD_REQUEST,
+                            null,
+                            null));
+                }
             } catch (JSONException e) {
                 return corsResponse(NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR,
                                                                      null,

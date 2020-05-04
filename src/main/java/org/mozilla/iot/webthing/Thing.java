@@ -756,6 +756,10 @@ public class Thing {
                 return true;
             }
 
+            if (actionInput == null) {
+                actionInput = new JSONObject();
+            }
+
             try {
                 this.schema.validate(actionInput);
             } catch (ValidationException e) {
