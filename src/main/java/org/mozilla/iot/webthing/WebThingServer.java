@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -293,11 +294,20 @@ public class WebThingServer extends RouterNanoHTTPD {
         this.hosts.add(systemHostname);
         this.hosts.add(String.format("%s:%d", systemHostname, this.port));
 
+        Map txt = new HashMap();
+        txt.put("path", "/");
+
+        if (this.isTls) {
+            txt.put("tls", "1");
+        }
+
         ServiceInfo serviceInfo = ServiceInfo.create("_webthing._tcp.local",
                                                      this.name,
                                                      null,
                                                      this.port,
-                                                     "path=/");
+                                                     0,
+                                                     0,
+                                                     txt);
         this.jmdns.registerService(serviceInfo);
 
         super.start(this.SOCKET_READ_TIMEOUT, daemon);
