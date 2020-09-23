@@ -1,4 +1,4 @@
-package org.mozilla.iot.webthing.errors;
+package io.webthings.webthing.errors;
 
 public class PropertyError extends Exception {
     public PropertyError() {

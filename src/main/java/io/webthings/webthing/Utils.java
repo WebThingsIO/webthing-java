@@ -1,7 +1,7 @@
 /**
  * Utility functions.
  */
-package org.mozilla.iot.webthing;
+package io.webthings.webthing;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;

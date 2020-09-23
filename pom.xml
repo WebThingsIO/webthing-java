@@ -4,13 +4,13 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.mozilla.iot</groupId>
+    <groupId>io.webthings</groupId>
     <artifactId>webthing</artifactId>
-    <version>0.12.3</version>
+    <version>0.13.0</version>
 
     <name>WebThing</name>
     <description>Implementation of an HTTP Web Thing.</description>
-    <url>https://github.com/mozilla-iot/webthing-java</url>
+    <url>https://github.com/WebThingsIO/webthing-java</url>
 
     <licenses>
         <license>
@@ -21,18 +21,18 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:https://github.com/mozilla-iot/webthing-java.git
+        <connection>scm:git:https://github.com/WebThingsIO/webthing-java.git
         </connection>
         <developerConnection>
-            scm:git:https://github.com/mozilla-iot/webthing-java.git
+            scm:git:https://github.com/WebThingsIO/webthing-java.git
         </developerConnection>
-        <url>https://github.com/mozilla-iot/webthing-java</url>
+        <url>https://github.com/WebThingsIO/webthing-java</url>
         <tag>HEAD</tag>
     </scm>
 
     <organization>
-        <name>Mozilla IoT</name>
-        <url>https://iot.mozilla.org</url>
+        <name>WebThingsIO</name>
+        <url>https://webthings.io</url>
     </organization>
 
     <developers>
@@ -66,7 +66,7 @@
 
     <issueManagement>
         <system>github</system>
-        <url>https://github.com/mozilla-iot/webthing-java/issues</url>
+        <url>https://github.com/WebThingsIO/webthing-java/issues</url>
     </issueManagement>
 
     <dependencies>
@@ -164,7 +164,7 @@
                     <archive>
                         <manifest>
                             <mainClass>
-                                org.mozilla.iot.webthing.example.SingleThing
+                                io.webthings.webthing.example.SingleThing
                             </mainClass>
                         </manifest>
                     </archive>

@@ -1,14 +1,14 @@
-package org.mozilla.iot.webthing.example;
+package io.webthings.webthing.example;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.mozilla.iot.webthing.Action;
-import org.mozilla.iot.webthing.Event;
-import org.mozilla.iot.webthing.Property;
-import org.mozilla.iot.webthing.Thing;
-import org.mozilla.iot.webthing.Value;
-import org.mozilla.iot.webthing.WebThingServer;
-import org.mozilla.iot.webthing.errors.PropertyError;
+import io.webthings.webthing.Action;
+import io.webthings.webthing.Event;
+import io.webthings.webthing.Property;
+import io.webthings.webthing.Thing;
+import io.webthings.webthing.Value;
+import io.webthings.webthing.WebThingServer;
+import io.webthings.webthing.errors.PropertyError;
 
 import java.io.IOException;
 import java.util.Arrays;

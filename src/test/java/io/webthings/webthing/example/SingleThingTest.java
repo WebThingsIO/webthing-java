@@ -1,4 +1,4 @@
-package org.mozilla.iot.webthing.example;
+package io.webthings.webthing.example;
 
 import org.junit.Test;
 

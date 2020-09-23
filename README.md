@@ -1,7 +1,7 @@
 # webthing
 
-[![Build Status](https://github.com/mozilla-iot/webthing-java/workflows/Java%20package/badge.svg)](https://github.com/mozilla-iot/webthing-java/workflows/Java%20package)
-[![Maven](https://img.shields.io/maven-central/v/org.mozilla.iot/webthing.svg)](https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.mozilla.iot%22%20AND%20a%3A%22webthing%22)
+[![Build Status](https://github.com/WebThingsIO/webthing-java/workflows/Java%20package/badge.svg)](https://github.com/WebThingsIO/webthing-java/workflows/Java%20package)
+[![Maven](https://img.shields.io/maven-central/v/io.webthings/webthing.svg)](https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22io.webthings%22%20AND%20a%3A%22webthing%22)
 [![license](https://img.shields.io/badge/license-MPL--2.0-blue.svg)](LICENSE)
 
 Implementation of an HTTP [Web Thing](https://iot.mozilla.org/wot/).
@@ -15,9 +15,9 @@ Add the following dependency to your project:
 ```xml
 <dependencies>
     <dependency>
-        <groupId>org.mozilla.iot</groupId>
+        <groupId>io.webthings</groupId>
         <artifactId>webthing</artifactId>
-        <version>0.12.0</version>
+        <version>0.13.0</version>
     </dependency>
 </dependencies>
 ```
@@ -29,7 +29,7 @@ Add the following dependency to your project:
 ```gradle
 dependencies {
     runtime(
-        [group: 'org.mozilla.iot', name: 'webthing', version: '0.12.0'],
+        [group: 'io.webthings', name: 'webthing', version: '0.13.0'],
     )
 }
 ```
@@ -41,7 +41,7 @@ dependencies {
 - Go to the "Dependencies" tab
 - Click green "+" button
 - Select "Library dependency"
-- Enter `org.mozilla.iot:webthing` in the search bar and search
+- Enter `io.webthings:webthing` in the search bar and search
 - Select the package in the result and confirm with "OK"
 - Go to "Project"
 - Add `, 'https://www.jitpack.io'` to "Default Library Repository" field
@@ -49,7 +49,7 @@ dependencies {
 
 # Example
 
-In this example we will set up a dimmable light and a humidity sensor (both using fake data, of course). Both working examples can be found in [here](https://github.com/mozilla-iot/webthing-java/tree/master/src/main/java/org/mozilla/iot/webthing/example).
+In this example we will set up a dimmable light and a humidity sensor (both using fake data, of course). Both working examples can be found in [here](https://github.com/WebThingsIO/webthing-java/tree/master/src/main/java/io/webthings/webthing/example).
 
 ## Dimmable Light
 
@@ -194,4 +194,4 @@ This will update our `Value` object with the sensor readings via the `this.level
 
 # Adding to Gateway
 
-To add your web thing to the WebThings Gateway, install the "Web Thing" add-on and follow the instructions [here](https://github.com/mozilla-iot/thing-url-adapter#readme).
+To add your web thing to the WebThings Gateway, install the "Web Thing" add-on and follow the instructions [here](https://github.com/WebThingsIO/thing-url-adapter#readme).

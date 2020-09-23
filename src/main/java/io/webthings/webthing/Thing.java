@@ -1,7 +1,7 @@
 /**
  * High-level Thing base class implementation.
  */
-package org.mozilla.iot.webthing;
+package io.webthings.webthing;
 
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
@@ -9,7 +9,7 @@ import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mozilla.iot.webthing.errors.PropertyError;
+import io.webthings.webthing.errors.PropertyError;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

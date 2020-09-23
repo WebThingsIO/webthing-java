@@ -1,12 +1,12 @@
 /**
  * Java Web Thing server implementation.
  */
-package org.mozilla.iot.webthing;
+package io.webthings.webthing;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mozilla.iot.webthing.errors.PropertyError;
+import io.webthings.webthing.errors.PropertyError;
 
 import java.io.IOException;
 import java.net.InetAddress;

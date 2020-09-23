@@ -1,4 +1,4 @@
-package org.mozilla.iot.webthing;
+package io.webthings.webthing;
 
 import java.util.Observable;
 import java.util.function.Consumer;

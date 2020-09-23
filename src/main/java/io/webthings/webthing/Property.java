@@ -1,14 +1,14 @@
 /**
  * High-level Property base class implementation.
  */
-package org.mozilla.iot.webthing;
+package io.webthings.webthing;
 
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.mozilla.iot.webthing.errors.PropertyError;
+import io.webthings.webthing.errors.PropertyError;
 
 /**
  * A Property represents an individual state value of a thing.

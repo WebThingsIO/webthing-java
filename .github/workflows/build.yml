@@ -21,9 +21,10 @@ jobs:
           '12.0.x',
           '13.0.x',
           '14.0.x',
+          '15.0.x',
         ]
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - uses: actions/setup-python@v1
         with:
           python-version: '3.8'
