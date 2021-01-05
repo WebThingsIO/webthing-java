@@ -8,6 +8,7 @@ import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import io.webthings.webthing.errors.PropertyError;
 
 /**
@@ -16,12 +17,12 @@ import io.webthings.webthing.errors.PropertyError;
  * @param <T> The type of the property value.
  */
 public class Property<T> {
-    private Thing thing;
-    private String name;
+    private final Thing thing;
+    private final String name;
     private String hrefPrefix;
-    private String href;
-    private JSONObject metadata;
-    private Value<T> value;
+    private final String href;
+    private final JSONObject metadata;
+    private final Value<T> value;
 
     /**
      * Initialize the object.

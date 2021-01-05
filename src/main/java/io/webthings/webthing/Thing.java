@@ -9,7 +9,6 @@ import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import io.webthings.webthing.errors.PropertyError;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -20,21 +19,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.webthings.webthing.errors.PropertyError;
+
 /**
  * A Web Thing.
  */
 public class Thing {
-    private String id;
-    private String context;
-    private JSONArray type;
-    private String title;
-    private String description;
-    private Map<String, Property> properties;
-    private Map<String, AvailableAction> availableActions;
-    private Map<String, AvailableEvent> availableEvents;
-    private Map<String, List<Action>> actions;
-    private List<Event> events;
-    private Set<WebThingServer.ThingHandler.ThingWebSocket> subscribers;
+    private final String id;
+    private final String context;
+    private final JSONArray type;
+    private final String title;
+    private final String description;
+    private final Map<String, Property> properties;
+    private final Map<String, AvailableAction> availableActions;
+    private final Map<String, AvailableEvent> availableEvents;
+    private final Map<String, List<Action>> actions;
+    private final List<Event> events;
+    private final Set<WebThingServer.ThingHandler.ThingWebSocket> subscribers;
     private String hrefPrefix;
     private String uiHref;
 
@@ -200,15 +201,10 @@ public class Thing {
     public void setHrefPrefix(String prefix) {
         this.hrefPrefix = prefix;
 
-        this.properties.forEach((name, value) -> {
-            value.setHrefPrefix(prefix);
-        });
+        this.properties.forEach((name, value) -> value.setHrefPrefix(prefix));
 
-        this.actions.forEach((actionName, list) -> {
-            list.forEach((action) -> {
-                action.setHrefPrefix(prefix);
-            });
-        });
+        this.actions.forEach((actionName, list) -> list.forEach((action) -> action
+                .setHrefPrefix(prefix)));
     }
 
     /**
@@ -268,6 +264,7 @@ public class Thing {
             try {
                 obj.put(name, value.asPropertyDescription());
             } catch (JSONException e) {
+                // pass
             }
         });
 
@@ -284,15 +281,11 @@ public class Thing {
         JSONArray array = new JSONArray();
 
         if (actionName == null) {
-            this.actions.forEach((name, list) -> {
-                list.forEach((action) -> {
-                    array.put(action.asActionDescription());
-                });
-            });
+            this.actions.forEach((name, list) -> list.forEach((action) -> array.put(
+                    action.asActionDescription())));
         } else if (this.actions.containsKey(actionName)) {
-            this.actions.get(actionName).forEach((action) -> {
-                array.put(action.asActionDescription());
-            });
+            this.actions.get(actionName)
+                        .forEach((action) -> array.put(action.asActionDescription()));
         }
 
         return array;
@@ -308,9 +301,7 @@ public class Thing {
         JSONArray array = new JSONArray();
 
         if (eventName == null) {
-            this.events.forEach((event) -> {
-                array.put(event.asEventDescription());
-            });
+            this.events.forEach((event) -> array.put(event.asEventDescription()));
         } else {
             this.events.forEach((event) -> {
                 if (event.getName().equals(eventName)) {
@@ -338,9 +329,7 @@ public class Thing {
      * @param property Property to remove.
      */
     public void removeProperty(Property property) {
-        if (this.properties.containsKey(property.getName())) {
-            this.properties.remove(property.getName());
-        }
+        this.properties.remove(property.getName());
     }
 
     /**
@@ -380,9 +369,8 @@ public class Thing {
      */
     public JSONObject getProperties() {
         JSONObject properties = new JSONObject();
-        this.properties.forEach((name, property) -> {
-            properties.put(name, property.getValue());
-        });
+        this.properties.forEach((name, property) -> properties.put(name,
+                                                                   property.getValue()));
         return properties;
     }
 
@@ -427,8 +415,7 @@ public class Thing {
         }
 
         List<Action> actions = this.actions.get(actionName);
-        for (int i = 0; i < actions.size(); ++i) {
-            Action action = actions.get(i);
+        for (Action action : actions) {
             if (actionId.equals(action.getId())) {
                 return action;
             }
@@ -547,13 +534,11 @@ public class Thing {
      * @param ws The websocket
      */
     public void removeSubscriber(WebThingServer.ThingHandler.ThingWebSocket ws) {
-        if (this.subscribers.contains(ws)) {
-            this.subscribers.remove(ws);
-        }
+        this.subscribers.remove(ws);
 
-        this.availableEvents.forEach((name, value) -> {
-            this.removeEventSubscriber(name, ws);
-        });
+        this.availableEvents.forEach((name, value) -> this.removeEventSubscriber(
+                name,
+                ws));
     }
 
     /**
@@ -597,9 +582,7 @@ public class Thing {
 
         String message = json.toString();
 
-        this.subscribers.forEach((subscriber) -> {
-            subscriber.sendMessage(message);
-        });
+        this.subscribers.forEach((subscriber) -> subscriber.sendMessage(message));
     }
 
     /**
@@ -615,9 +598,7 @@ public class Thing {
 
         String message = json.toString();
 
-        this.subscribers.forEach((subscriber) -> {
-            subscriber.sendMessage(message);
-        });
+        this.subscribers.forEach((subscriber) -> subscriber.sendMessage(message));
     }
 
     /**
@@ -640,17 +621,17 @@ public class Thing {
 
         this.availableEvents.get(eventName)
                             .getSubscribers()
-                            .forEach((subscriber) -> {
-                                subscriber.sendMessage(message);
-                            });
+                            .forEach((subscriber) -> subscriber.sendMessage(
+                                    message));
     }
 
     /**
      * Class to describe an event available for subscription.
      */
-    private class AvailableEvent {
-        private JSONObject metadata;
-        private Set<WebThingServer.ThingHandler.ThingWebSocket> subscribers;
+    private static class AvailableEvent {
+        private final JSONObject metadata;
+        private final Set<WebThingServer.ThingHandler.ThingWebSocket>
+                subscribers;
 
         /**
          * Initialize the object.
@@ -686,9 +667,7 @@ public class Thing {
          * @param ws The websocket
          */
         public void removeSubscriber(WebThingServer.ThingHandler.ThingWebSocket ws) {
-            if (this.subscribers.contains(ws)) {
-                this.subscribers.remove(ws);
-            }
+            this.subscribers.remove(ws);
         }
 
         /**
@@ -704,10 +683,10 @@ public class Thing {
     /**
      * Class to describe an action available to be taken.
      */
-    private class AvailableAction {
-        private JSONObject metadata;
-        private Class cls;
-        private Schema schema;
+    private static class AvailableAction {
+        private final JSONObject metadata;
+        private final Class cls;
+        private final Schema schema;
 
         /**
          * Initialize the object.

@@ -17,7 +17,7 @@ Add the following dependency to your project:
     <dependency>
         <groupId>io.webthings</groupId>
         <artifactId>webthing</artifactId>
-        <version>0.13.0</version>
+        <version>0.14.0</version>
     </dependency>
 </dependencies>
 ```
@@ -29,7 +29,7 @@ Add the following dependency to your project:
 ```gradle
 dependencies {
     runtime(
-        [group: 'io.webthings', name: 'webthing', version: '0.13.0'],
+        [group: 'io.webthings', name: 'webthing', version: '0.14.0'],
     )
 }
 ```

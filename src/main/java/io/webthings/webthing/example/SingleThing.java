@@ -2,6 +2,11 @@ package io.webthings.webthing.example;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.UUID;
+
 import io.webthings.webthing.Action;
 import io.webthings.webthing.Event;
 import io.webthings.webthing.Property;
@@ -9,10 +14,6 @@ import io.webthings.webthing.Thing;
 import io.webthings.webthing.Value;
 import io.webthings.webthing.WebThingServer;
 import io.webthings.webthing.errors.PropertyError;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.UUID;
 
 public class SingleThing {
     public static Thing makeThing() {
@@ -89,15 +90,11 @@ public class SingleThing {
             server = new WebThingServer(new WebThingServer.SingleThing(thing),
                                         8888);
 
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    server.stop();
-                }
-            });
+            Runtime.getRuntime().addShutdownHook(new Thread(server::stop));
 
             server.start(false);
         } catch (IOException e) {
-            System.out.println(e);
+            System.out.println(e.toString());
             System.exit(1);
         }
     }
@@ -120,12 +117,14 @@ public class SingleThing {
             try {
                 Thread.sleep(input.getInt("duration"));
             } catch (InterruptedException e) {
+                // pass
             }
 
             try {
                 thing.setProperty("brightness", input.getInt("brightness"));
                 thing.addEvent(new OverheatedEvent(thing, 102));
             } catch (PropertyError e) {
+                // pass
             }
         }
     }

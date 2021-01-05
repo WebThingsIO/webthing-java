@@ -10,14 +10,14 @@ import org.json.JSONObject;
  * An Action represents an individual action on a thing.
  */
 public class Action {
-    private String id;
-    private Thing thing;
-    private String name;
-    private JSONObject input;
+    private final String id;
+    private final Thing thing;
+    private final String name;
+    private final JSONObject input;
     private String hrefPrefix;
-    private String href;
+    private final String href;
     private String status;
-    private String timeRequested;
+    private final String timeRequested;
     private String timeCompleted;
 
     /**

@@ -12,10 +12,10 @@ import org.json.JSONObject;
  * @param <T> The type of the event data.
  */
 public class Event<T> {
-    private Thing thing;
-    private String name;
-    private T data;
-    private String time;
+    private final Thing thing;
+    private final String name;
+    private final T data;
+    private final String time;
 
     /**
      * Initialize the object.

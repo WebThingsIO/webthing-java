@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.14.0] - 2021-01-05
+### Added
+- Parameter to disable host validation in server.
+
 ## [0.13.0] - 2020-09-23
 ### Changed
 - Update author and URLs to indicate new project home.
@@ -37,7 +41,8 @@
 ### Changed
 - Property, Action, and Event description now use `links` rather than `href`. - [Spec PR](https://github.com/WebThingsIO/wot/pull/119)
 
-[Unreleased]: https://github.com/WebThingsIO/webthing-java/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/WebThingsIO/webthing-java/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/WebThingsIO/webthing-java/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/WebThingsIO/webthing-java/compare/v0.12.3...v0.13.0
 [0.12.3]: https://github.com/WebThingsIO/webthing-java/compare/v0.12.2...v0.12.3
 [0.12.2]: https://github.com/WebThingsIO/webthing-java/compare/v0.12.1...v0.12.2

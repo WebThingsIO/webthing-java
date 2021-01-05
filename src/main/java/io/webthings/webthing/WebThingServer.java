@@ -6,7 +6,6 @@ package io.webthings.webthing;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import io.webthings.webthing.errors.PropertyError;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -25,6 +24,7 @@ import javax.net.ssl.SSLServerSocketFactory;
 import fi.iki.elonen.NanoHTTPD;
 import fi.iki.elonen.NanoWSD;
 import fi.iki.elonen.router.RouterNanoHTTPD;
+import io.webthings.webthing.errors.PropertyError;
 
 /**
  * Server to represent a Web Thing over HTTP.
@@ -32,13 +32,14 @@ import fi.iki.elonen.router.RouterNanoHTTPD;
 public class WebThingServer extends RouterNanoHTTPD {
     private static final int SOCKET_READ_TIMEOUT = 30 * 1000;
     private static final int WEBSOCKET_PING_INTERVAL = 20 * 1000;
-    private int port;
-    private ThingsType things;
-    private String name;
+    private final int port;
+    private final ThingsType things;
+    private final String name;
     private String hostname;
-    private String basePath;
-    private List<String> hosts;
-    private boolean isTls;
+    private final boolean disableHostValidation;
+    private final String basePath;
+    private final List<String> hosts;
+    private final boolean isTls;
     private JmDNS jmdns;
 
     /**
@@ -50,7 +51,7 @@ public class WebThingServer extends RouterNanoHTTPD {
      */
     public WebThingServer(ThingsType things)
             throws IOException, NullPointerException {
-        this(things, 80, null, null, null, "/");
+        this(things, 80, null, null, null, "/", false);
     }
 
     /**
@@ -63,7 +64,7 @@ public class WebThingServer extends RouterNanoHTTPD {
      */
     public WebThingServer(ThingsType things, int port)
             throws IOException, NullPointerException {
-        this(things, port, null, null, null, "/");
+        this(things, port, null, null, null, "/", false);
     }
 
     /**
@@ -77,7 +78,7 @@ public class WebThingServer extends RouterNanoHTTPD {
      */
     public WebThingServer(ThingsType things, int port, String hostname)
             throws IOException, NullPointerException {
-        this(things, port, hostname, null, null, "/");
+        this(things, port, hostname, null, null, "/", false);
     }
 
     /**
@@ -95,7 +96,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                           String hostname,
                           SSLOptions sslOptions)
             throws IOException, NullPointerException {
-        this(things, port, hostname, sslOptions, null, "/");
+        this(things, port, hostname, sslOptions, null, "/", false);
     }
 
     /**
@@ -115,7 +116,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                           SSLOptions sslOptions,
                           List<Route> additionalRoutes)
             throws IOException, NullPointerException {
-        this(things, port, hostname, sslOptions, additionalRoutes, "/");
+        this(things, port, hostname, sslOptions, additionalRoutes, "/", false);
     }
 
     /**
@@ -137,6 +138,39 @@ public class WebThingServer extends RouterNanoHTTPD {
                           List<Route> additionalRoutes,
                           String basePath)
             throws IOException, NullPointerException {
+        this(things,
+             port,
+             hostname,
+             sslOptions,
+             additionalRoutes,
+             basePath,
+             false);
+    }
+
+    /**
+     * Initialize the WebThingServer.
+     *
+     * @param things                List of Things managed by this server
+     * @param port                  Port to listen on
+     * @param hostname              Host name, i.e. mything.com
+     * @param sslOptions            SSL options to pass to the NanoHTTPD server
+     * @param additionalRoutes      List of additional routes to add to the
+     *                              server
+     * @param basePath              Base URL path to use, rather than '/'
+     * @param disableHostValidation Whether or not to disable host validation --
+     *                              note that this can lead to DNS rebinding
+     *                              attacks
+     * @throws IOException          If server fails to bind.
+     * @throws NullPointerException If something bad happened.
+     */
+    public WebThingServer(ThingsType things,
+                          int port,
+                          String hostname,
+                          SSLOptions sslOptions,
+                          List<Route> additionalRoutes,
+                          String basePath,
+                          boolean disableHostValidation)
+            throws IOException, NullPointerException {
         super(port);
         this.port = port;
         this.things = things;
@@ -144,6 +178,7 @@ public class WebThingServer extends RouterNanoHTTPD {
         this.isTls = sslOptions != null;
         this.hostname = hostname;
         this.basePath = basePath.replaceAll("/$", "");
+        this.disableHostValidation = disableHostValidation;
 
         this.hosts = new ArrayList<>();
         this.hosts.add("localhost");
@@ -185,47 +220,56 @@ public class WebThingServer extends RouterNanoHTTPD {
                      PropertyHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/:thingId/properties",
                      PropertiesHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/:thingId/actions/:actionName/:actionId",
                      ActionIDHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/:thingId/actions/:actionName",
                      ActionHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/:thingId/actions",
                      ActionsHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/:thingId/events/:eventName",
                      EventHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/:thingId/events",
                      EventsHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/:thingId",
                      ThingHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/",
                      ThingsHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
         } else {
             things.getThing(0).setHrefPrefix(this.basePath);
 
@@ -234,42 +278,50 @@ public class WebThingServer extends RouterNanoHTTPD {
                      PropertyHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/properties",
                      PropertiesHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/actions/:actionName/:actionId",
                      ActionIDHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/actions/:actionName",
                      ActionHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/actions",
                      ActionsHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/events/:eventName",
                      EventHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/events",
                      EventsHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
             addRoute(this.basePath + "/",
                      ThingHandler.class,
                      this.things,
                      this.hosts,
-                     this.isTls);
+                     this.isTls,
+                     this.disableHostValidation);
         }
 
         setNotFoundHandler(Error404UriHandler.class);
@@ -310,7 +362,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                                                      txt);
         this.jmdns.registerService(serviceInfo);
 
-        super.start(this.SOCKET_READ_TIMEOUT, daemon);
+        super.start(WebThingServer.SOCKET_READ_TIMEOUT, daemon);
     }
 
     /**
@@ -349,7 +401,7 @@ public class WebThingServer extends RouterNanoHTTPD {
      * Thread to perform an action.
      */
     private static class ActionRunner extends Thread {
-        private Action action;
+        private final Action action;
 
         /**
          * Initialize the object.
@@ -372,9 +424,9 @@ public class WebThingServer extends RouterNanoHTTPD {
      * Class to hold options required by SSL server.
      */
     public static class SSLOptions {
-        private String path;
-        private String password;
-        private String[] protocols;
+        private final String path;
+        private final String password;
+        private final String[] protocols;
 
         /**
          * Initialize the object.
@@ -554,13 +606,12 @@ public class WebThingServer extends RouterNanoHTTPD {
          * @return The parsed JSON body as a JSONObject, or null on error.
          */
         public JSONObject parseBody(IHTTPSession session) {
-            Integer contentLength = Integer.parseInt(session.getHeaders()
-                                                            .get("content-length"));
+            int contentLength = Integer.parseInt(session.getHeaders()
+                                                        .get("content-length"));
             byte[] buffer = new byte[contentLength];
             try {
                 session.getInputStream().read(buffer, 0, contentLength);
-                JSONObject obj = new JSONObject(new String(buffer));
-                return obj;
+                return new JSONObject(new String(buffer));
             } catch (IOException e) {
                 return null;
             }
@@ -596,14 +647,17 @@ public class WebThingServer extends RouterNanoHTTPD {
          */
         public boolean validateHost(UriResource uriResource,
                                     IHTTPSession session) {
-            List<String> hosts = uriResource.initParameter(1, List.class);
+            boolean disableHostValidation =
+                    uriResource.initParameter(3, Boolean.class);
 
-            String host = session.getHeaders().get("host");
-            if (host != null && hosts.contains(host.toLowerCase())) {
+            if (disableHostValidation) {
                 return true;
             }
 
-            return false;
+            List<String> hosts = uriResource.initParameter(1, List.class);
+
+            String host = session.getHeaders().get("host");
+            return (host != null && hosts.contains(host.toLowerCase()));
         }
 
         /**
@@ -987,6 +1041,7 @@ public class WebThingServer extends RouterNanoHTTPD {
                 try {
                     this.send(message);
                 } catch (IOException e) {
+                    // pass
                 }
             }
         }
@@ -1666,7 +1721,7 @@ public class WebThingServer extends RouterNanoHTTPD {
      * A container for a single thing.
      */
     public static class SingleThing implements ThingsType {
-        private Thing thing;
+        private final Thing thing;
 
         /**
          * Initialize the container.
@@ -1711,8 +1766,8 @@ public class WebThingServer extends RouterNanoHTTPD {
      * A container for multiple things.
      */
     public static class MultipleThings implements ThingsType {
-        private List<Thing> things;
-        private String name;
+        private final List<Thing> things;
+        private final String name;
 
         /**
          * Initialize the container.
