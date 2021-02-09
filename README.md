@@ -43,8 +43,6 @@ dependencies {
 - Select "Library dependency"
 - Enter `io.webthings:webthing` in the search bar and search
 - Select the package in the result and confirm with "OK"
-- Go to "Project"
-- Add `, 'https://www.jitpack.io'` to "Default Library Repository" field
 - Click "OK" in the Project Structure dialog
 
 # Example
