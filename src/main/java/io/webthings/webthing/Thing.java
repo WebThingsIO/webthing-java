@@ -399,6 +399,13 @@ public class Thing {
             return;
         }
 
+        if(value instanceof Integer
+            && prop.getMetadata().optString("type").equalsIgnoreCase("number"))
+        {
+            setProperty(propertyName,  ((Integer) value).doubleValue());
+            return;
+        }
+
         prop.setValue(value);
     }
 
