@@ -1,8 +1,13 @@
 package io.webthings.webthing;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+import java.util.List;
+import java.util.Map;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
 
@@ -16,57 +21,192 @@ public class ThingTest {
     }
 
     @Test
-    public void ItSupportsIntegralInputForFractionalProperties() throws PropertyError {
+    public void itSupportsIntegerValues() throws PropertyError
+    {
         // given
         Thing thing = new Thing("urn:dev:test-123", "My TestThing");
 
-        Value<Integer> intValue = new Value<>(456,
-            iv -> System.out.println("integer value: " + iv));
-        thing.addProperty(new Property<>(thing, "intProp", intValue,
-            new JSONObject().put("type", "integer")));
+        Value<Integer> value = new Value<>(42, v -> System.out.println("value: " + v));
+        thing.addProperty(new Property<>(thing, "p", value, new JSONObject().put("type", "integer")));
+        
+        // when updating property, then
+        assertEquals(42, value.get().intValue());
 
-        Value<Double> doubleValue = new Value<>(12.34,
-            dv -> System.out.println("doubel value: " + dv));
-        thing.addProperty(new Property<>(thing, "doubleProp", doubleValue,
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":"+Integer.MIN_VALUE+"}"));
+        assertEquals(Integer.MIN_VALUE, value.get().intValue());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":"+Integer.MAX_VALUE+"}"));
+        assertEquals(Integer.MAX_VALUE, value.get().intValue());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":4.2}"));
+        assertEquals(4, value.get().intValue());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":4}"));
+        assertEquals(4, value.get().intValue());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":0}"));
+        assertEquals(0, value.get().intValue());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":-123}"));
+        assertEquals(-123, value.get().intValue());
+    }
+
+    @Test
+    public void itSupportsLongValues() throws PropertyError
+    {
+        // given
+        Thing thing = new Thing("urn:dev:test-123", "My TestThing");
+
+        Value<Long> value = new Value<>(42l, v -> System.out.println("value: " + v));
+        thing.addProperty(new Property<>(thing, "p", value, new JSONObject().put("type", "integer")));
+        
+        // when updating property, then
+        assertEquals(42, value.get().longValue());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":"+Long.MIN_VALUE+"}"));
+        assertEquals(Long.MIN_VALUE, value.get().longValue());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":"+Long.MAX_VALUE+"}"));
+        assertEquals(Long.MAX_VALUE, value.get().longValue());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":4.2}"));
+        assertEquals(4, value.get().longValue());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":4}"));
+        assertEquals(4, value.get().longValue());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":0}"));
+        assertEquals(0, value.get().longValue());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":-123}"));
+        assertEquals(-123, value.get().longValue());
+    }
+
+    @Test
+    public void itSupportsFloatValues() throws PropertyError
+    {
+        // given
+        Thing thing = new Thing("urn:dev:test-123", "My TestThing");
+
+        Value<Float> value = new Value<>(42.0123f, v -> System.out.println("value: " + v));
+        thing.addProperty(new Property<>(thing, "p", value,
             new JSONObject().put("type", "number")));
+        
+        // when updating property, then
+        assertEquals(42.0123f, value.get().floatValue(), 0.00001);
 
-        Value<Float> floatValue = new Value<>(4.2f,
-            fv -> System.out.println("float value: " + fv));
-        thing.addProperty(new Property<>(thing, "floatProp", floatValue,
-            new JSONObject().put("type", "number")));
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":"+Float.MIN_VALUE+"}"));
+        assertEquals(Float.MIN_VALUE, value.get().floatValue(), 0.00001);
 
-        // when updating integer property, then
-        assertEquals(Integer.valueOf(456), intValue.get());
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":"+Float.MAX_VALUE+"}"));
+        assertEquals(Float.MAX_VALUE, value.get().floatValue(), 0.00001);
 
-        Exception ex = assertThrows(PropertyError.class, () -> thing.setProperty("intProp", 
-            simulateHttpPutProperty("intProp", "{\"intProp\":42.0}")));
-        assertEquals(ex.getMessage(), "Invalid property value");
-        assertEquals(Integer.valueOf(456), intValue.get());
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":4.2}"));
+        assertEquals(4.2f, value.get().floatValue(), 0.00001);
 
-        thing.setProperty("intProp", 
-            simulateHttpPutProperty("intProp", "{\"intProp\":24}"));
-        assertEquals(Integer.valueOf(24), intValue.get());
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":4}"));
+        assertEquals(4f, value.get().floatValue(), 0.00001);
 
-        // when updating double property, then
-        assertEquals(12.34, doubleValue.get(), 0.00001);
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":0}"));
+        assertEquals(0f, value.get().floatValue(), 0.00001);
 
-        thing.setProperty("doubleProp", 
-            simulateHttpPutProperty("doubleProp", "{\"doubleProp\":42.0}"));
-        assertEquals(42.0, doubleValue.get(), 0.00001);
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":-123.456}"));
+        assertEquals(-123.456f, value.get().floatValue(), 0.00001);
+    }
 
-        thing.setProperty("doubleProp", 
-            simulateHttpPutProperty("doubleProp", "{\"doubleProp\":24}"));
-        assertEquals(24.0, doubleValue.get(), 0.00001);
+    @Test
+    public void itSupportsDoubleValues() throws PropertyError
+    {
+        // given
+        Thing thing = new Thing("urn:dev:test-123", "My TestThing");
 
-        // when updating float property, then
-        assertEquals(4.2f, floatValue.get(), 0.00001);
+        Value<Double> value = new Value<>(42.0123, v -> System.out.println("value: " + v));
+        thing.addProperty(new Property<>(thing, "p", value, new JSONObject().put("type", "number")));
+        
+        // when updating property, then
+        assertEquals(42.0123, value.get(), 0.00001);
 
-        thing.setProperty("floatProp", 
-            simulateHttpPutProperty("floatProp", "{\"floatProp\":2.4}"));
-        assertEquals(42.0f, floatValue.get(), 0.00001);
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":"+Double.MIN_VALUE+"}"));
+        assertEquals(Double.MIN_VALUE, value.get(), 0.0000000001);
 
-        thing.setProperty("floatProp", 
-            simulateHttpPutProperty("floatProp", "{\"floatProp\":4}"));
-        assertEquals(4.0f, floatValue.get(), 0.00001);
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":"+Double.MAX_VALUE+"}"));
+        assertEquals(Double.MAX_VALUE, value.get(), 0.0000000001);
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":4.2}"));
+        assertEquals(4.2, value.get(), 0.00001);
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":4}"));
+        assertEquals(4, value.get(), 0.00001);
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":0}"));
+        assertEquals(0, value.get(), 0.00001);
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":-123.456}"));
+        assertEquals(-123.456, value.get(), 0.00001);
+    }
+
+    @Test
+    public void itSupportsObjectValues() throws PropertyError
+    {
+        // given
+        Thing thing = new Thing("urn:dev:test-123", "My TestThing");
+
+        Value<JSONObject> value = new Value<>(new JSONObject().put("key1", "val1").put("key2", "val2"),
+            v -> System.out.println("value: " + v));
+        thing.addProperty(new Property<>(thing, "p", value, new JSONObject().put("type", "object")));
+        
+        // when updating property, then
+        assertEquals(Map.of("key1", "val1", "key2", "val2"), value.get().toMap());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":{\"key3\":\"val3\"}}"));
+        assertEquals(Map.of("key3", "val3"), value.get().toMap());
+    }
+
+    @Test
+    public void itSupportsArrayValues() throws PropertyError
+    {
+        // given
+        Thing thing = new Thing("urn:dev:test-123", "My TestThing");
+
+        Value<JSONArray> value = new Value<>(new JSONArray("[1,2,3]"), v -> System.out.println("value: " + v));
+        thing.addProperty(new Property<>(thing, "p", value, new JSONObject().put("type", "array")));
+        
+        // when updating property, then
+        assertEquals(List.of(1,2,3), value.get().toList());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":[]}"));
+        assertEquals(List.of(), value.get().toList());
+    }
+
+    @Test
+    public void itSupportsStringValues() throws PropertyError
+    {
+        // given
+        Thing thing = new Thing("urn:dev:test-123", "My TestThing");
+
+        Value<String> value = new Value<>("the-initial-string", v -> System.out.println("value: " + v));
+        thing.addProperty(new Property<>(thing, "p", value, new JSONObject().put("type", "string")));
+        
+        // when updating property, then
+        assertEquals("the-initial-string", value.get());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":\"the-updated-string\"}"));
+        assertEquals("the-updated-string", value.get());
+    }
+
+    @Test
+    public void itSupportsBooleanValues() throws PropertyError
+    {
+        // given
+        Thing thing = new Thing("urn:dev:test-123", "My TestThing");
+
+        Value<Boolean> value = new Value<>(false, v -> System.out.println("value: " + v));
+        thing.addProperty(new Property<>(thing, "p", value, new JSONObject().put("type", "boolean")));
+        
+        // when updating property, then
+        assertFalse(value.get());
+
+        thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":true}"));
+        assertTrue(value.get());
     }
 }

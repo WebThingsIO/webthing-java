@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import io.webthings.webthing.errors.PropertyError;
@@ -399,10 +400,9 @@ public class Thing {
             return;
         }
 
-        if(value instanceof Integer
-            && prop.getMetadata().optString("type").equalsIgnoreCase("number"))
-        {
-            setProperty(propertyName,  ((Integer) value).doubleValue());
+        Optional<Object> converted = Utils.checkIfBaseTypeConversionIsRequired(prop.getBaseType(), value);
+        if(converted.isPresent()) {
+            setProperty(propertyName, converted.get());
             return;
         }
 

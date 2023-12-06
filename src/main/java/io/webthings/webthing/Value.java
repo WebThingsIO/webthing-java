@@ -1,5 +1,6 @@
 package io.webthings.webthing;
 
+import java.util.Objects;
 import java.util.Observable;
 import java.util.function.Consumer;
 
@@ -16,7 +17,17 @@ import java.util.function.Consumer;
  * @author Tim Hinkes (timmeey@timmeey.de)
  */
 public class Value<T> extends Observable {
+
+    static class BaseTypeHelper
+    {
+        static <BT> Class<BT> derive(final BT initialValue) {
+            Objects.requireNonNull(initialValue, "Can not derive base type from null.");
+            return (Class<BT>) initialValue.getClass();
+        }
+    }
+
     private final Consumer<T> valueForwarder;
+    private final Class<T> baseType;
     private T lastValue;
 
     /**
@@ -28,7 +39,20 @@ public class Value<T> extends Observable {
      * @param initialValue The initial value
      */
     public Value(final T initialValue) {
-        this(initialValue, null);
+        this(BaseTypeHelper.derive(initialValue), initialValue, null);
+    }
+    
+    /**
+     * Create a read only value that can only be updated by a Thing's reading.
+     * Initial value will be set to null.
+     * <p>
+     * Example: A sensor is updating its reading, but the reading cannot be set
+     * externally.
+     *
+     * @param baseType The Class of the values base type
+     */
+    public Value(final Class<T> baseType) {
+        this(baseType, null, null);
     }
 
     /**
@@ -41,8 +65,48 @@ public class Value<T> extends Observable {
      *                       thing
      */
     public Value(final T initialValue, final Consumer<T> valueForwarder) {
+        this(BaseTypeHelper.derive(initialValue), initialValue, valueForwarder);
+    }
+
+    /**
+     * Create a writable value that can be set to a new value.
+     * Initial value will be set to null.
+     * <p>
+     * Example: A light that can be switched off by setting this to false.
+     *
+     * @param baseType       The Class of the values base type
+     * @param valueForwarder The method that updates the actual value on the
+     *                       thing
+     */
+    public Value(final Class<T> baseType, final Consumer<T> valueForwarder) {
+        this(baseType, null, valueForwarder);
+    }
+
+    /**
+     * Create a writable value that can be set to a new value.
+     * <p>
+     * Example: A light that can be switched off by setting this to false.
+     *
+     * @param baseType       The Class of the values base type
+     * @param initialValue   The initial value
+     * @param valueForwarder The method that updates the actual value on the
+     *                       thing
+     */
+    public Value(final Class<T> baseType, final T initialValue, final Consumer<T> valueForwarder) {
+        Objects.requireNonNull(baseType, "The base type of a value must not be null.");
+        this.baseType = baseType;
         this.lastValue = initialValue;
         this.valueForwarder = valueForwarder;
+    }
+
+    /**
+     * Get the base type of this value.
+     *
+     * @return The base type.
+     */
+    public Class<T> getBaseType()
+    {
+        return this.baseType;
     }
 
     /**
