@@ -4,7 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.json.JSONArray;
@@ -156,10 +158,13 @@ public class ThingTest {
         thing.addProperty(new Property<>(thing, "p", value, new JSONObject().put("type", "object")));
         
         // when updating property, then
-        assertEquals(Map.of("key1", "val1", "key2", "val2"), value.get().toMap());
+        Map<String, Object> expectedMap = new HashMap<>();
+        expectedMap.put("key1", "val1");
+        expectedMap.put("key2", "val2");
+        assertEquals(expectedMap, value.get().toMap());
 
         thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":{\"key3\":\"val3\"}}"));
-        assertEquals(Map.of("key3", "val3"), value.get().toMap());
+        assertEquals(Collections.singletonMap("key3", "val3"), value.get().toMap());
     }
 
     @Test
@@ -172,10 +177,10 @@ public class ThingTest {
         thing.addProperty(new Property<>(thing, "p", value, new JSONObject().put("type", "array")));
         
         // when updating property, then
-        assertEquals(List.of(1,2,3), value.get().toList());
+        assertEquals(Arrays.asList(1,2,3), value.get().toList());
 
         thing.setProperty("p", simulateHttpPutProperty("p", "{\"p\":[]}"));
-        assertEquals(List.of(), value.get().toList());
+        assertEquals(Arrays.asList(), value.get().toList());
     }
 
     @Test

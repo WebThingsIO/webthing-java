@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -65,12 +66,16 @@ public class Utils {
         return ret;
     }
 
-    final static Map<Class<?>, Function<Number, Object>> supportedNumberConverters = Map.of(
-        Integer.class, n -> n.intValue(),
-        Long.class, n -> n.longValue(),
-        Float.class, n -> n.floatValue(),
-        Double.class, n -> n.doubleValue()
-    );
+    static Map<Class<?>, Function<Number, Object>> createNumberConverters()
+    {
+        Map<Class<?>, Function<Number, Object>> converters = new HashMap<>();
+        converters.put(Integer.class, n -> n.intValue());
+        converters.put(Long.class, n -> n.longValue());
+        converters.put(Float.class, n -> n.floatValue());
+        converters.put(Double.class, n -> n.doubleValue());
+        return converters;
+    }
+    final static Map<Class<?>, Function<Number, Object>> supportedNumberConverters = createNumberConverters();
 
     /**
      * Performes a type conversion when required.

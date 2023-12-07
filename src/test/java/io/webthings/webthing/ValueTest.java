@@ -4,8 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 
-import java.util.List;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.Collections;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -28,18 +28,18 @@ public class ValueTest {
         assertEquals(String.class, stringByValue.getBaseType());
         assertEquals("my-string-value", stringByValue.get());
 
-        Value<String> stringNull = new Value<>(String.class, str -> {});
+        Value<String> stringNull = new Value<>(String.class, (String str) -> {});
         assertEquals(String.class, stringByValue.getBaseType());
         assertNull(stringNull.get());
 
         Value<JSONArray> listByValue = new Value<>(new JSONArray("[1,2,3]"), list -> {});
         assertEquals(JSONArray.class, listByValue.getBaseType());
-        assertEquals(List.of(1,2,3), listByValue.get().toList());
+        assertEquals(Arrays.asList(1, 2, 3), listByValue.get().toList());
 
         Value<JSONObject> objectExplicit;
         objectExplicit = new Value<>(JSONObject.class, new JSONObject().put("key", "value"), obj -> {});
         assertEquals(JSONObject.class, objectExplicit.getBaseType());
-        assertEquals(Map.of("key","value"), objectExplicit.get().toMap());
+        assertEquals(Collections.singletonMap("key", "value"), objectExplicit.get().toMap());
     }
 
     @Test
