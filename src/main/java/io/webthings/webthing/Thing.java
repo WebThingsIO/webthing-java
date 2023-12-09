@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import io.webthings.webthing.errors.PropertyError;
@@ -396,6 +397,12 @@ public class Thing {
             throws PropertyError {
         Property<T> prop = this.findProperty(propertyName);
         if (prop == null) {
+            return;
+        }
+
+        Optional<Object> converted = Utils.checkIfBaseTypeConversionIsRequired(prop.getBaseType(), value);
+        if(converted.isPresent()) {
+            setProperty(propertyName, converted.get());
             return;
         }
 

@@ -171,4 +171,14 @@ public class Property<T> {
     public JSONObject getMetadata() {
         return this.metadata;
     }
+
+    /**
+     * Get the base type of this properties value.
+     *
+     * @return The base type.
+     */
+    public Class<T> getBaseType()
+    {
+        return value.getBaseType();
+    }
 }

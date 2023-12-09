@@ -10,9 +10,13 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 public class Utils {
     /**
@@ -60,5 +64,31 @@ public class Utils {
         List<String> ret = new ArrayList<>(addresses);
         Collections.sort(ret);
         return ret;
+    }
+
+    static Map<Class<?>, Function<Number, Object>> createNumberConverters()
+    {
+        Map<Class<?>, Function<Number, Object>> converters = new HashMap<>();
+        converters.put(Integer.class, n -> n.intValue());
+        converters.put(Long.class, n -> n.longValue());
+        converters.put(Float.class, n -> n.floatValue());
+        converters.put(Double.class, n -> n.doubleValue());
+        return converters;
+    }
+    final static Map<Class<?>, Function<Number, Object>> supportedNumberConverters = createNumberConverters();
+
+    /**
+     * Performes a type conversion when required.
+     * @param baseTypeClass The Class of the base type to check agains
+     * @param value         Value that might need conversion
+     * @return Optional containing converted value or empty Optional when no conversion was required.
+     */
+    public static <T> Optional<Object>  checkIfBaseTypeConversionIsRequired(Class<?> baseTypeClass, T value) {
+        if(value instanceof Number && baseTypeClass != value.getClass()) {
+            if(Number.class.isAssignableFrom(baseTypeClass)) {
+                return Optional.ofNullable(supportedNumberConverters.get(baseTypeClass)).map(f -> f.apply((Number) value));
+            }
+        }
+        return Optional.empty();
     }
 }
