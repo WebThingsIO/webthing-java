@@ -32,7 +32,7 @@ jobs:
           draft: false
           prerelease: false
       - name: Publish to Apache Maven Central
-        run: mvn deploy
+        run: mvn --no-transfer-progress deploy
         env:
           MAVEN_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.NEXUS_PASSWORD }}

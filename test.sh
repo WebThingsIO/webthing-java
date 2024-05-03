@@ -5,7 +5,7 @@ git clone https://github.com/WebThingsIO/webthing-tester
 pip3 install --user -r webthing-tester/requirements.txt
 
 # build the jar
-mvn clean compile assembly:single test
+mvn --no-transfer-progress clean compile assembly:single test
 jar=$(find target -type f -name 'webthing-*-jar-with-dependencies.jar')
 
 # build and test the single-thing example
