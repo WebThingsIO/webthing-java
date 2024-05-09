@@ -14,6 +14,11 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 8
+          server-id: ossrh
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_CENTRAL_TOKEN
+          gpg-private-key: ${{ secrets.GPG_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
       - name: Set release version
         run: echo "RELEASE_VERSION=${GITHUB_REF:11}" >> $GITHUB_ENV
       - name: Create Release
@@ -26,11 +31,9 @@ jobs:
           release_name: Release ${{ env.RELEASE_VERSION }}
           draft: false
           prerelease: false
-      - name: Publish to Maven
-        uses: samuelmeuli/action-maven-publish@v1
-        with:
-          gpg_private_key: ${{ secrets.GPG_KEY }}
-          gpg_passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          nexus_username: ${{ secrets.NEXUS_USERNAME }}
-          nexus_password: ${{ secrets.NEXUS_PASSWORD }}
-          maven_profiles: release
+      - name: Publish to Apache Maven Central
+        run: mvn --no-transfer-progress deploy --activate-profiles release
+        env:
+          MAVEN_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.NEXUS_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
