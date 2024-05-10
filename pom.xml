@@ -73,7 +73,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20200518</version>
+            <version>20240303</version>
         </dependency>
         <dependency>
             <groupId>org.nanohttpd</groupId>
@@ -93,7 +93,7 @@
         <dependency>
             <groupId>org.jmdns</groupId>
             <artifactId>jmdns</artifactId>
-            <version>3.5.5</version>
+            <version>3.5.9</version>
         </dependency>
         <dependency>
             <groupId>com.github.everit-org.json-schema</groupId>
